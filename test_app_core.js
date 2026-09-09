@@ -42,7 +42,9 @@ const generated = buildRules({
     backup_proxy: 'proxy01.example.com',
   },
 });
-assert.equal(generated.length, 2, 'multiple addresses expand to a Cartesian product');
+assert.equal(generated.length, 1, 'multiple addresses are grouped into one component rule');
+assert.equal(generated[0].sourceAddress, 'backup01.example.com, backup02.example.com');
+assert.equal(generated[0].destinationAddress, 'proxy01.example.com');
 
 const sameEndpointRules = buildRules({
   rules: [{ src: 'Backup Server', dst: 'Backup Proxy', proto: 'TCP', port: '443', notes: 'test' }],
@@ -53,8 +55,7 @@ const sameEndpointRules = buildRules({
 });
 assert.equal(sameEndpointRules.length, 0, 'toggle excludes identical source and destination addresses');
 assert.deepEqual(generated.map(r => [r.sourceAddress, r.destinationAddress]), [
-  ['backup01.example.com', 'proxy01.example.com'],
-  ['backup02.example.com', 'proxy01.example.com'],
+  ['backup01.example.com, backup02.example.com', 'proxy01.example.com'],
 ]);
 assert.ok(generated.every(r => r.destinationComponent === 'Backup Proxy'));
 assert.ok(!generated.some(r => r.destinationComponent === 'DNS Server'), 'rules with unselected endpoints are excluded');

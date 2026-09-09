@@ -66,26 +66,34 @@
       if (!sourceIds.length || !destinationIds.length) return;
 
       sourceIds.forEach(sourceId => destinationIds.forEach(destinationId => {
-        // A component may legitimately communicate with itself, but only retain it
-        // when the official row names that same role on both sides.
-        addressMap[sourceId].forEach(sourceAddress => addressMap[destinationId].forEach(destinationAddress => {
-          if (excludeSameEndpoints && sourceAddress.trim().toLowerCase() === destinationAddress.trim().toLowerCase()) return;
-          const key = [sourceId, sourceAddress, destinationId, destinationAddress, rule.proto, rule.port, rule.notes].join('\u001f');
-          if (seen.has(key)) return;
-          seen.add(key);
-          output.push({
-            sourceRuleIndex,
-            sourceComponentId: sourceId,
-            sourceComponent: componentById.get(sourceId).label,
-            sourceAddress,
-            destinationComponentId: destinationId,
-            destinationComponent: componentById.get(destinationId).label,
-            destinationAddress,
-            protocol: rule.proto,
-            ports: rule.port,
-            notes: rule.notes || '—',
-          });
-        }));
+        // Keep one rule per documented component relationship. Multiple hosts
+        // belonging to a component are represented as a comma-separated list.
+        let sourceAddresses = addressMap[sourceId].slice();
+        let destinationAddresses = addressMap[destinationId].slice();
+        if (excludeSameEndpoints) {
+          const destinationSet = new Set(destinationAddresses.map(address => address.trim().toLowerCase()));
+          sourceAddresses = sourceAddresses.filter(address => !destinationSet.has(address.trim().toLowerCase()));
+          const sourceSet = new Set(sourceAddresses.map(address => address.trim().toLowerCase()));
+          destinationAddresses = destinationAddresses.filter(address => !sourceSet.has(address.trim().toLowerCase()));
+        }
+        if (!sourceAddresses.length || !destinationAddresses.length) return;
+        const sourceAddress = sourceAddresses.join(', ');
+        const destinationAddress = destinationAddresses.join(', ');
+        const key = [sourceId, sourceAddress, destinationId, destinationAddress, rule.proto, rule.port, rule.notes].join('\u001f');
+        if (seen.has(key)) return;
+        seen.add(key);
+        output.push({
+          sourceRuleIndex,
+          sourceComponentId: sourceId,
+          sourceComponent: componentById.get(sourceId).label,
+          sourceAddress,
+          destinationComponentId: destinationId,
+          destinationComponent: componentById.get(destinationId).label,
+          destinationAddress,
+          protocol: rule.proto,
+          ports: rule.port,
+          notes: rule.notes || '—',
+        });
       }));
     });
     return output;
