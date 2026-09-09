@@ -256,10 +256,27 @@
   .toast.success { border-color: var(--success); color: var(--success); }
   .toast.error { border-color: var(--danger); color: var(--danger); }
 
+
+  .component-addresses { display: grid; gap: 10px; }
+  .component-row {
+    display: grid; grid-template-columns: minmax(210px, .8fr) minmax(280px, 1.8fr);
+    gap: 14px; align-items: start; padding: 12px;
+    border: 1px solid var(--border); border-radius: 7px; background: var(--bg);
+  }
+  .component-row .checkbox-label { padding-top: 9px; }
+  .address-field { width: 100%; min-height: 48px; resize: vertical; padding: 9px 11px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--fg); font: 0.8rem 'SFMono-Regular', Consolas, monospace; }
+  .address-field:focus { outline: none; border-color: var(--accent); }
+  .address-field:disabled { opacity: .4; cursor: not-allowed; }
+  .address-help { margin-top: 5px; font-size: .68rem; color: var(--muted); }
+  .empty-selection { color: var(--muted); font-size: .8rem; padding: 4px 0; }
+
   @media (max-width: 640px) {
     body { padding: 12px; }
     .config-panel { grid-template-columns: 1fr; }
     .checkbox-grid { grid-template-columns: 1fr; }
+    .component-row { grid-template-columns: 1fr; }
     th, td { padding: 8px 10px; font-size: 0.75rem; }
   }
 </style>
@@ -276,25 +293,24 @@
     </div>
   </header>
 
-  <div class="config-panel">
+  <div class="config-panel full">
     <div class="config-section">
-      <h3>Source FQDN</h3>
-      <input type="text" class="fqdn-input" id="sourceFqdn"
-             placeholder="e.g. backup01.corp.example.com or 10.0.1.5">
-    </div>
-    <div class="config-section">
-      <h3>Destination FQDN</h3>
-      <input type="text" class="fqdn-input" id="destFqdn"
-             placeholder="e.g. repo01.corp.example.com or 10.0.2.10">
+      <h3>1. Select Components</h3>
+      <div class="checkbox-grid" id="componentCheckboxes"></div>
+      <p style="margin-top:10px;font-size:0.75rem;color:var(--muted)">
+        Select at least two endpoints. A rule is included only when both its source and destination map to selected components.
+      </p>
     </div>
   </div>
 
   <div class="config-panel full" style="margin-top:0">
     <div class="config-section">
-      <h3>Components &amp; Roles</h3>
-      <div class="checkbox-grid" id="componentCheckboxes"></div>
+      <h3>2. Component Addresses</h3>
+      <div class="component-addresses" id="componentAddresses">
+        <p class="empty-selection">Select components above to enter their addresses.</p>
+      </div>
       <p style="margin-top:10px;font-size:0.75rem;color:var(--muted)">
-        Select every component that exists in your Veeam infrastructure. Rules will be generated for each selected component's required ports.
+        Enter one or more FQDNs or IP addresses for every selected component. Separate multiple addresses with commas, semicolons, or new lines.
       </p>
     </div>
   </div>
@@ -329,6 +345,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="app-core.js"></script>
 <script>
 // ── Veeam v13 Port Database ─────────────────────────────────────────────
 // Each rule: { sourceRole, destRole, proto, ports, notes }
@@ -756,425 +773,168 @@ const PORT_DB = [
   { src:'Backup Server', dst:'Proxy appliance', proto:'TCP', port:'443', notes:'—' },
 ];
 
-// Component definitions for the selection UI
+// Components map UI selections to wording used in Veeam's From/To tables.
 const COMPONENTS = [
-  { id:'backup_server',        label:'Backup Server',            roles:['Backup Server'] },
-  { id:'backup_proxy',         label:'Backup Proxy',             roles:['Backup Proxy'] },
-  { id:'gateway_server',       label:'Gateway Server',           roles:['Gateway Server'] },
-  { id:'repository',           label:'Backup Repository',        roles:['Backup Repository'] },
-  { id:'mount_server',         label:'Mount Server',             roles:['Mount Server'] },
-  { id:'veeam_infra_appliance',label:'Veeam Infrastructure Appliance', roles:['Veeam Infrastructure Appliance'] },
-  { id:'web_ui_pc',            label:'Web UI PC / Console',      roles:['Web UI and Host Management console PC','Veeam Backup & Replication console','Web UI PC'] },
-  { id:'remote_access_pc',     label:'Remote Access PC',         roles:['Remote access PC'] },
-  { id:'rest_client',          label:'REST Client',              roles:['REST client'] },
-  { id:'vcenter',              label:'vCenter Server',           roles:['vCenter Server'] },
-  { id:'esxi',                 label:'ESXi Server',              roles:['ESXi server'] },
-  { id:'hyper_v',              label:'Hyper-V Server',           roles:['Hyper-V server'] },
-  { id:'scvmm',                label:'SCVMM',                    roles:['SCVMM'] },
-  { id:'vm_guest_os',          label:'VM Guest OS (protected workloads)', roles:['VM Guest OS','VM guest OS'] },
-  { id:'guest_interaction_proxy', label:'Guest Interaction Proxy', roles:['Guest Interaction Proxy','Guest interaction proxy'] },
-  { id:'log_shipping_server',  label:'Log Shipping Server',      roles:['Log shipping server'] },
-  { id:'wan_accelerator',      label:'WAN Accelerator',          roles:['WAN accelerator'] },
-  { id:'cdp_proxy',            label:'CDP Proxy',                roles:['CDP proxy'] },
-  { id:'source_workload',      label:'Source Workload (CDP)',    roles:['Source workload'] },
-  { id:'tape_server',          label:'Tape Server',              roles:['Tape server'] },
-  { id:'helper_appliance',     label:'Helper Appliance',         roles:['Helper appliance'] },
-  { id:'helper_host',          label:'Helper Host',              roles:['Helper host'] },
-  { id:'proxy_appliance',      label:'Proxy Appliance (SureBackup/SureReplica)', roles:['Proxy appliance'] },
-  { id:'nfs_share',            label:'NFS Share',                roles:['NFS share'] },
-  { id:'smb_share',            label:'SMB/CIFS Share',           roles:['SMB share'] },
-  { id:'file_server',          label:'File Server (Win/Linux)',  roles:['File server'] },
-  { id:'nas_filer',            label:'NAS Filer (NetApp/Isilon/Nutanix)', roles:['NAS filer'] },
-  { id:'cache_repository',     label:'Cache Repository',         roles:['Cache repository'] },
-  { id:'dedup_appliance',      label:'Deduplicating Appliance (ExaGrid/DXi/etc.)', roles:['Deduplicating appliance'] },
-  { id:'dd_data_domain',       label:'Dell Data Domain',         roles:['Dell Data Domain'] },
-  { id:'hpe_storeonce',        label:'HPE StoreOnce',            roles:['HPE StoreOnce'] },
-  { id:'storage_system',       label:'Storage System (generic)', roles:['Storage system'] },
-  { id:'object_storage',       label:'Object Storage (S3/Azure/GCP)', roles:['Smart Object Storage API','Amazon S3 object storage','S3 compatible object storage','Microsoft Azure object storage','IBM Cloud object storage'] },
-  { id:'veeam_one',            label:'Veeam ONE Server/Web Services', roles:['Veeam ONE Server','Veeam ONE Web Services Server'] },
-  { id:'smtp_server',          label:'SMTP Server',              roles:['SMTP server'] },
-  { id:'dns_server',           label:'DNS Server',               roles:['DNS server'] },
-  { id:'ntp_server',           label:'NTP/NTS Server',           roles:['NTP server','NTS server'] },
-  { id:'ad_dc',                label:'Active Directory Domain Controller', roles:['Active Directory Domain Controllers'] },
-  { id:'postgresql_db',        label:'PostgreSQL Config DB',     roles:['PostgreSQL configuration database'] },
-  { id:'mssql_db',             label:'Microsoft SQL Server (config DB)', roles:['Microsoft SQL Server hosting the Veeam Backup & Replication configuration database'] },
-  { id:'kmip_server',          label:'KMIP Server',              roles:['Key Management System (KMIP) server'] },
-  { id:'syslog_server',        label:'Syslog Server',            roles:['Syslog server'] },
-  { id:'ndmp_server',          label:'NDMP Server',              roles:['NDMP server'] },
-  { id:'veeam_update_repo',    label:'Veeam Update Repository', roles:['Veeam Update Repository'] },
-  { id:'veeam_update_server',  label:'Veeam Update Server',     roles:['Veeam Update Server'] },
-  { id:'veeam_update_notify',  label:'Veeam Update Notification Server', roles:['Veeam Update Notification Server'] },
-  { id:'veeam_ai_assistant',   label:'Veeam AI Assistant',       roles:['Veeam AI Assistant'] },
-  { id:'veeam_data_cloud_vault', label:'Veeam Data Cloud Vault', roles:['Veeam Data Cloud Vault'] },
-  { id:'microsoft_graph',      label:'Microsoft Graph API',     roles:['Microsoft Graph REST API'] },
-  { id:'gmail_api',            label:'Gmail REST API',           roles:['Gmail REST API'] },
-  { id:'CRL_distribution',     label:'CRL Distribution Points', roles:['Certificate Revocation Lists','Veeam Update CRL distribution points','Amazon S3 CRL distribution points','Google Cloud CRL distribution points','Microsoft Azure CRL distribution points','Veeam Data Cloud Vault CRL distribution points'] },
+  { id:'backup_server', label:'Backup Server', roles:['Backup Server'], infrastructure:true },
+  { id:'backup_proxy', label:'Backup Proxy', roles:['Backup Proxy'], infrastructure:true },
+  { id:'gateway_server', label:'Gateway Server', roles:['Gateway Server'], infrastructure:true },
+  { id:'repository', label:'Backup Repository', roles:['Backup Repository'], infrastructure:true },
+  { id:'mount_server', label:'Mount Server', roles:['Mount Server'], infrastructure:true },
+  { id:'veeam_infra_appliance', label:'Veeam Infrastructure Appliance', roles:['Veeam Infrastructure Appliance'], infrastructure:true },
+  { id:'web_ui_pc', label:'Web UI / Management Console PC', roles:['Web UI and Host Management console PC','Web UI PC','Veeam Backup & Replication console'], infrastructure:true },
+  { id:'remote_access_pc', label:'Remote Access PC', roles:['Remote Access PC'], infrastructure:true },
+  { id:'rest_client', label:'REST Client', roles:['REST Client'], infrastructure:true },
+  { id:'vcenter', label:'vCenter Server', roles:['vCenter Server'], infrastructure:true },
+  { id:'esxi', label:'ESXi Server', roles:['ESXi Server','ESXi Host'], infrastructure:true },
+  { id:'hyper_v', label:'Hyper-V Server', roles:['Hyper-V Server','Hyper-V Host'], infrastructure:true },
+  { id:'scvmm', label:'SCVMM', roles:['SCVMM'], infrastructure:true },
+  { id:'vm_guest_os', label:'VM Guest OS', roles:['VM Guest OS','VMs in the virtual lab'], infrastructure:true },
+  { id:'guest_interaction_proxy', label:'Guest Interaction Proxy', roles:['Guest Interaction Proxy'], infrastructure:true },
+  { id:'log_shipping_server', label:'Log Shipping Server', roles:['Log Shipping Server'], infrastructure:true },
+  { id:'wan_accelerator', label:'WAN Accelerator', roles:['WAN Accelerator'], infrastructure:true },
+  { id:'cdp_proxy', label:'CDP Proxy', roles:['CDP Proxy'], infrastructure:true },
+  { id:'source_workload', label:'Source Workload (CDP)', roles:['Source Workload'], infrastructure:true },
+  { id:'tape_server', label:'Tape Server', roles:['Tape Server'], infrastructure:true },
+  { id:'helper_appliance', label:'Helper Appliance', roles:['Helper Appliance'], infrastructure:true },
+  { id:'helper_host', label:'Helper Host', roles:['Helper Host'], infrastructure:true },
+  { id:'proxy_appliance', label:'Proxy Appliance (SureBackup/SureReplica)', roles:['Proxy Appliance'], infrastructure:true },
+  { id:'nfs_share', label:'NFS Share', roles:['NFS Share'], infrastructure:false },
+  { id:'smb_share', label:'SMB/CIFS Share', roles:['SMB Share','CIFS Share'], infrastructure:false },
+  { id:'file_server', label:'File Server', roles:['File Server'], infrastructure:true },
+  { id:'nas_filer', label:'NAS Filer', roles:['NAS Filer'], infrastructure:true },
+  { id:'cache_repository', label:'Cache Repository', roles:['Cache Repository'], infrastructure:true },
+  { id:'dedup_appliance', label:'Deduplicating Appliance', roles:['Deduplicating Appliance'], infrastructure:true },
+  { id:'dd_data_domain', label:'Dell Data Domain', roles:['Dell Data Domain'], infrastructure:true },
+  { id:'hpe_storeonce', label:'HPE StoreOnce', roles:['HPE StoreOnce'], infrastructure:true },
+  { id:'storage_system', label:'Storage System', roles:['Storage System'], infrastructure:true },
+  { id:'object_storage', label:'Object Storage', roles:['Object Storage','Smart Object Storage API','Amazon S3','Microsoft Azure Object Storage','IBM Cloud Object Storage'], infrastructure:false },
+  { id:'veeam_one', label:'Veeam ONE', roles:['Veeam ONE Server','Veeam ONE Web Services Server'], infrastructure:true },
+  { id:'smtp_server', label:'SMTP Server', roles:['SMTP Server'], infrastructure:false },
+  { id:'dns_server', label:'DNS Server', roles:['DNS Server'], infrastructure:false },
+  { id:'ntp_server', label:'NTP/NTS Server', roles:['NTP Server','NTS Server'], infrastructure:false },
+  { id:'ad_dc', label:'Active Directory Domain Controller', roles:['Active Directory Domain Controllers'], infrastructure:false },
+  { id:'postgresql_db', label:'PostgreSQL Config DB', roles:['PostgreSQL Configuration Database'], infrastructure:false },
+  { id:'mssql_db', label:'Microsoft SQL Config DB', roles:['Microsoft SQL Server'], infrastructure:false },
+  { id:'kmip_server', label:'KMIP Server', roles:['Key Management System (KMIP) Server'], infrastructure:false },
+  { id:'syslog_server', label:'Syslog Server', roles:['Syslog Server'], infrastructure:false },
+  { id:'ndmp_server', label:'NDMP Server', roles:['NDMP Server'], infrastructure:false },
+  { id:'veeam_update_repo', label:'Veeam Update Repository', roles:['Veeam Update Repository'], infrastructure:false },
+  { id:'veeam_update_server', label:'Veeam Update Server', roles:['Veeam Update Server'], infrastructure:false },
+  { id:'veeam_update_notify', label:'Veeam Update Notification Server', roles:['Veeam Update Notification Server'], infrastructure:false },
+  { id:'veeam_ai_assistant', label:'Veeam AI Assistant', roles:['Veeam AI Assistant'], infrastructure:false },
+  { id:'veeam_data_cloud_vault', label:'Veeam Data Cloud Vault', roles:['Veeam Data Cloud Vault'], infrastructure:false },
+  { id:'microsoft_graph', label:'Microsoft Graph API', roles:['Microsoft Graph REST API'], infrastructure:false },
+  { id:'gmail_api', label:'Gmail REST API', roles:['Gmail REST API'], infrastructure:false },
+  { id:'crl_distribution', label:'CRL Distribution Points', roles:['Certificate Revocation Lists','CRL Distribution Points'], infrastructure:false },
 ];
 
-// ── State ───────────────────────────────────────────────────────────────
-let selectedComponents = new Set();
-let currentRules = [];
-let sourceFqdn = '';
-let destFqdn = '';
-
-// ── DOM refs ─────────────────────────────────────────────────────────────
+const { parseAddresses, buildRules } = VinfitoCore;
+const state = { selected: new Set(), addresses: {}, rules: [] };
 const $ = id => document.getElementById(id);
-const sourceInput   = $('sourceFqdn');
-const destInput     = $('destFqdn');
-const checkboxGrid  = $('componentCheckboxes');
-const generateBtn   = $('generateBtn');
-const exportBtn     = $('exportCsvBtn');
-const clearBtn      = $('clearBtn');
-const ruleCount     = $('ruleCount');
-const ruleCount2    = $('ruleCount2');
-const tableWrap     = $('rulesTableWrap');
-const tableBody     = $('rulesTableBody');
-const toast         = $('toast');
+const checkboxGrid = $('componentCheckboxes');
+const addressesPanel = $('componentAddresses');
+const tableWrap = $('rulesTableWrap');
+const tableBody = $('rulesTableBody');
+const ruleCount = $('ruleCount');
+const ruleCount2 = $('ruleCount2');
+const toast = $('toast');
 
-// ── Init checkboxes ─────────────────────────────────────────────────────
-function initCheckboxes() {
+function initComponents() {
   checkboxGrid.innerHTML = '';
-  COMPONENTS.forEach(c => {
+  COMPONENTS.forEach(component => {
     const label = document.createElement('label');
     label.className = 'checkbox-label';
-    const input = document.createElement('input');
-    input.type = 'checkbox';
-    input.value = c.id;
-    input.dataset.roles = c.roles.join('|');
-    input.addEventListener('change', () => {
-      if (input.checked) selectedComponents.add(c.id);
-      else selectedComponents.delete(c.id);
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = component.id;
+    checkbox.addEventListener('change', () => {
+      checkbox.checked ? state.selected.add(component.id) : state.selected.delete(component.id);
+      renderAddressFields();
     });
-    label.appendChild(input);
-    label.appendChild(document.createTextNode(c.label));
+    label.append(checkbox, document.createTextNode(component.label));
     checkboxGrid.appendChild(label);
   });
 }
-initCheckboxes();
 
-// ── FQDN inputs ─────────────────────────────────────────────────────────
-sourceInput.addEventListener('input', () => { sourceFqdn = sourceInput.value.trim(); });
-destInput.addEventListener('input', () => { destFqdn = destInput.value.trim(); });
-
-// ── Generate rules ──────────────────────────────────────────────────────
-function generateRules() {
-  // Collect all roles for selected components
-  const selectedRoles = new Set();
-  selectedComponents.forEach(id => {
-    const comp = COMPONENTS.find(c => c.id === id);
-    if (comp) comp.roles.forEach(r => selectedRoles.add(r));
-  });
-
-  if (selectedRoles.size === 0) {
-    showToast('Select at least one component.', 'error');
+function renderAddressFields() {
+  const selected = COMPONENTS.filter(component => state.selected.has(component.id));
+  if (!selected.length) {
+    addressesPanel.innerHTML = '<p class="empty-selection">Select components above to enter their addresses.</p>';
     return;
   }
-
-  currentRules = PORT_DB.filter(rule => {
-    // Match if the source role appears in the rule's source field,
-    // OR if any of the user's selected roles appear in the rule's source field.
-    // For practical use, we match when the rule's "source" (the "From" column)
-    // mentions a role the user has selected OR the rule's "destination" (the "To" column)
-    // mentions a role the user has selected.
-    const srcMatch = matchesRoles(rule.src, selectedRoles);
-    const dstMatch = matchesRoles(rule.dst, selectedRoles);
-    // Include rule if it involves any selected component on either side
-    return srcMatch || dstMatch;
+  addressesPanel.innerHTML = selected.map(component => `
+    <div class="component-row">
+      <label class="checkbox-label" for="address-${component.id}">${escHtml(component.label)}</label>
+      <div>
+        <textarea class="address-field" id="address-${component.id}" data-component="${component.id}"
+          placeholder="${component.id === 'backup_server' ? 'backup01.example.com, backup02.example.com' : 'hostname.example.com or 10.0.0.10'}">${escHtml(state.addresses[component.id] || '')}</textarea>
+        <div class="address-help">${parseAddresses(state.addresses[component.id]).length || 0} address(es)</div>
+      </div>
+    </div>`).join('');
+  addressesPanel.querySelectorAll('.address-field').forEach(field => {
+    field.addEventListener('input', () => {
+      state.addresses[field.dataset.component] = field.value;
+      field.nextElementSibling.textContent = `${parseAddresses(field.value).length} address(es)`;
+    });
   });
-
-  renderRules();
 }
 
-function matchesRoles(ruleText, selectedRoles) {
-  if (!ruleText) return false;
-  for (const role of selectedRoles) {
-    // Check for role name appearing as a distinct word/group in the rule text
-    // The rule text uses role names like "Backup Server", "Backup Proxy", etc.
-    if (ruleText.includes(role)) return true;
-    // Also check for the singular/plural or sub-role variants
-    // e.g. "Backup repository" should match "repository" component
+function generateRules() {
+  try {
+    state.rules = buildRules({ rules: PORT_DB, components: COMPONENTS,
+      selectedIds: state.selected, addresses: state.addresses });
+    renderRules();
+    if (!state.rules.length) showToast('No documented rules connect the selected components.', 'error');
+  } catch (error) {
+    state.rules = [];
+    renderRules();
+    showToast(error.message, 'error');
   }
-  // Broader match: check if any selected component's primary role keyword appears
-  for (const role of selectedRoles) {
-    const keywords = role.split(' ').filter(k => k.length > 2);
-    for (const kw of keywords) {
-      if (ruleText.toLowerCase().includes(kw.toLowerCase())) return true;
-    }
-  }
-  return false;
 }
 
 function renderRules() {
-  if (currentRules.length === 0) {
-    tableWrap.style.display = 'none';
-    ruleCount.textContent = 'No rules generated yet';
-    return;
-  }
-
-  tableWrap.style.display = 'block';
-  ruleCount.textContent = `${currentRules.length} rule${currentRules.length !== 1 ? 's' : ''} generated`;
-  ruleCount2.textContent = `${currentRules.length} rule${currentRules.length !== 1 ? 's' : ''}`;
-
-  let html = '<table><thead><tr>' +
-    '<th>#</th>' +
-    '<th>From (Source)</th>' +
-    '<th>To (Destination)</th>' +
-    '<th>Protocol</th>' +
-    '<th>Port(s)</th>' +
-    '<th>Notes / Context</th>' +
-    '</tr></thead><tbody>';
-
-  currentRules.forEach((rule, i) => {
-    const srcDisplay = replaceFqdn(rule.src);
-    const dstDisplay = replaceFqdn(rule.dst);
-    const protoDisplay = rule.proto;
-    const portDisplay = rule.port;
-    const notesDisplay = rule.notes || '—';
-
-    html += '<tr>' +
-      `<td style="color:var(--muted);font-size:0.72rem">${i + 1}</td>` +
-      `<td class="source-val"><div class="fqdn-val">${escHtml(srcDisplay)}</div></td>` +
-      `<td class="dest-val"><div class="fqdn-val">${escHtml(dstDisplay)}</div></td>` +
-      `<td class="proto-val">${escHtml(protoDisplay)}</td>` +
-      `<td class="port-val">${escHtml(portDisplay)}</td>` +
-      `<td class="notes-val">${escHtml(notesDisplay)}</td>` +
-      '</tr>';
-  });
-
-  html += '</tbody></table>';
-  tableBody.innerHTML = html;
+  ruleCount.textContent = state.rules.length ? `${state.rules.length} rule${state.rules.length === 1 ? '' : 's'} generated` : 'No rules generated yet';
+  ruleCount2.textContent = state.rules.length ? `${state.rules.length} rule${state.rules.length === 1 ? '' : 's'}` : '';
+  tableWrap.style.display = state.rules.length ? 'block' : 'none';
+  if (!state.rules.length) { tableBody.innerHTML = ''; return; }
+  tableBody.innerHTML = `<table><thead><tr><th>#</th><th>Source component / address</th><th>Destination component / address</th><th>Protocol</th><th>Port(s)</th><th>Notes</th></tr></thead><tbody>${state.rules.map((rule, index) => `
+    <tr><td>${index + 1}</td>
+    <td class="source-val"><small>${escHtml(rule.sourceComponent)}</small><div class="fqdn-val">${escHtml(rule.sourceAddress)}</div></td>
+    <td class="dest-val"><small>${escHtml(rule.destinationComponent)}</small><div class="fqdn-val">${escHtml(rule.destinationAddress)}</div></td>
+    <td class="proto-val">${escHtml(rule.protocol)}</td><td class="port-val">${escHtml(rule.ports)}</td>
+    <td class="notes-val">${escHtml(rule.notes)}</td></tr>`).join('')}</tbody></table>`;
 }
 
-function replaceFqdn(text) {
-  if (!sourceFqdn && !destFqdn) return text;
-  let result = text;
-
-  // Replace "Backup server", "Backup Server", etc. with source FQDN
-  // when it appears as the source entity in context
-  // We do a smart replacement: replace the first entity-like term with source,
-  // and destination-like terms with dest.
-  // Strategy: replace known role names with FQDN placeholders.
-  // For simplicity: we replace ALL role references with their FQDN if set.
-  // A more sophisticated version would track direction, but for a firewall list
-  // the user will see both sides populated with their FQDNs.
-
-  if (sourceFqdn) {
-    // Replace source-role mentions
-    const sourceRolePatterns = [
-      'Backup server', 'Backup Server',
-      'Backup proxy', 'Backup Proxy',
-      'Veeam Backup & Replication console',
-      'Web UI and Host Management console PC',
-      'Web UI PC',
-      'Remote access PC',
-      'REST client',
-      'Mount server',
-      'Veeam Infrastructure Appliance',
-      'Veeam Software Appliance',
-      'Backup repository',
-      'Gateway server',
-      'Guest interaction proxy',
-      'Guest Interaction Proxy',
-      'Log shipping server',
-      'WAN accelerator',
-      'CDP proxy',
-      'Tape server',
-      'Helper appliance',
-      'Helper host',
-      'Proxy appliance',
-      'File server',
-      'Backup proxy or Tape server',
-      'File server (Windows or Linux)',
-      'File server (Windows or Linux),  \nBackup proxy,',
-      'Backup server (primary or standby)',
-      'Source extent',
-      'Old cache repository',
-      'Source backup repository',
-      'Backup server (Veeam Software Appliance)',
-      'Backup server (Veeam Software Appliance),',
-    ];
-    for (const pat of sourceRolePatterns) {
-      // Only replace when it looks like the source entity (appears early in the text)
-      result = result.replace(new RegExp('^' + pat.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(,|<br>|$)'), sourceFqdn + '$1');
-    }
-  }
-
-  if (destFqdn) {
-    const destRolePatterns = [
-      'vCenter Server', 'vCenter server',
-      'ESXi server', 'ESXi host',
-      'Hyper-V server',
-      'SCVMM',
-      'PostgreSQL configuration database',
-      'Microsoft SQL Server',
-      'SMTP server',
-      'DNS server',
-      'NTP server', 'NTS server',
-      'Active Directory Domain Controllers',
-      'NFS backup repository',
-      'SMB (CIFS) backup repository',
-      'Dell Data Domain',
-      'HPE StoreOnce',
-      'Deduplicating appliance',
-      'Dell Unity XT',
-      'Dell PowerScale',
-      'HPE 3PAR StoreServ',
-      'HPE Alletra',
-      'Nutanix Files',
-      'Storage system',
-      'NFS share',
-      'SMB share',
-      'Amazon S3 object storage',
-      'Microsoft Azure object storage',
-      'Google Cloud',
-      'IBM Cloud object storage',
-      'S3 compatible object storage',
-      'Veeam ONE Server',
-      'Veeam ONE Web Services Server',
-      'VMware Cloud Director',
-      'VM guest OS',
-      'VM guest OS (Microsoft Windows)',
-      'VM guest OS (Linux)',
-      'VM guest OS (Linux/Unix)',
-      'VM guest OS (MS SQL)',
-      'VM guest OS (Oracle)',
-      'VM guest OS (PostgreSQL)',
-      'Log shipping server',
-      'Gateway server',
-      'Backup repository',
-      'Target extent',
-      'New cache repository',
-      'Archive repository',
-      'Primary or secondary backup repository',
-      'NDMP server',
-      'Cache repository',
-      'WAN accelerator (source and target)',
-      'WAN accelerator (target)',
-      'WAN accelerator (source)',
-      'CDP proxy (source and target)',
-      'CDP proxy (source)',
-      'CDP proxy (target)',
-      'vCenter Server',
-      'ESXi host (source)',
-      'ESXi host (target)',
-      'Source workload',
-      'Proxy appliance',
-      'Internet-facing proxy server',
-      'Hyper-V server',
-      'Microsoft SMB3 server (Hyper-V storage)',
-      'Veeam Update Repository',
-      'Veeam Update Server',
-      'Veeam Update Notification Server',
-      'Veeam AI Assistant',
-      'Veeam Data Cloud Vault',
-      'Microsoft Graph REST API',
-      'Gmail REST API',
-      'Certificate Revocation Lists',
-      'Key Management System (KMIP) server',
-      'Syslog server',
-      'Veeam Signature Update Server',
-      'Veeam Update CRL distribution points',
-      'Veeam Update Server CRL distribution points',
-      'Amazon S3 CRL distribution points',
-      'Google Cloud CRL distribution points',
-      'Microsoft Azure CRL distribution points',
-      'Veeam Data Cloud Vault CRL distribution points',
-      'Amazon CRL distribution points',
-    ];
-    for (const pat of destRolePatterns) {
-      result = result.replace(new RegExp('\\b' + pat.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b'), destFqdn);
-    }
-  }
-
-  return result;
-}
-
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// ── Export CSV ──────────────────────────────────────────────────────────
 function exportCsv() {
-  if (currentRules.length === 0) {
-    showToast('Generate rules first.', 'error');
-    return;
-  }
-
-  // CSV header
-  const rows = [
-    ['Rule #','Source (From)','Destination (To)','Protocol','Port(s)','Notes / Context']
-  ];
-
-  currentRules.forEach((rule, i) => {
-    rows.push([
-      String(i + 1),
-      replaceFqdn(rule.src),
-      replaceFqdn(rule.dst),
-      rule.proto,
-      rule.port,
-      rule.notes || ''
-    ]);
-  });
-
-  const csvContent = rows.map(row =>
-    row.map(cell => {
-      const escaped = String(cell).replace(/"/g, '""');
-      if (escaped.includes(',') || escaped.includes('"') || escaped.includes('\n')) {
-        return '"' + escaped + '"';
-      }
-      return escaped;
-    }).join(',')
-  ).join('\r\n');
-
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `veeam_firewall_rules_${new Date().toISOString().slice(0,10)}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
-  showToast(`Exported ${currentRules.length} rules to CSV.`, 'success');
+  if (!state.rules.length) { showToast('Generate rules before exporting.', 'error'); return; }
+  const rows = [['Rule #','Source Component','Source Address','Destination Component','Destination Address','Protocol','Port(s)','Notes']];
+  state.rules.forEach((rule, index) => rows.push([index + 1, rule.sourceComponent, rule.sourceAddress,
+    rule.destinationComponent, rule.destinationAddress, rule.protocol, rule.ports, rule.notes]));
+  const csv = rows.map(row => row.map(csvCell).join(',')).join('\r\n');
+  const blob = new Blob(['\ufeff' + csv], { type:'text/csv;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `veeam-firewall-rules-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+  showToast(`Exported ${state.rules.length} rules.`, 'success');
 }
 
-// ── Clear ───────────────────────────────────────────────────────────────
 function clearAll() {
-  sourceInput.value = '';
-  destInput.value = '';
-  sourceFqdn = '';
-  destFqdn = '';
-  selectedComponents.clear();
-  document.querySelectorAll('#componentCheckboxes input[type="checkbox"]').forEach(cb => {
-    cb.checked = false;
-  });
-  currentRules = [];
-  tableWrap.style.display = 'none';
-  ruleCount.textContent = 'No rules generated yet';
-  showToast('Cleared.', 'success');
+  state.selected.clear(); state.addresses = {}; state.rules = [];
+  checkboxGrid.querySelectorAll('input').forEach(input => { input.checked = false; });
+  renderAddressFields(); renderRules();
 }
-
-// ── Toast ───────────────────────────────────────────────────────────────
+function csvCell(value) { const text = String(value ?? ''); return `"${text.replace(/"/g, '""')}"`; }
+function escHtml(value) { return String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
 let toastTimer;
-function showToast(msg, type) {
-  toast.textContent = msg;
-  toast.className = 'toast show ' + (type || '');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { toast.className = 'toast'; }, 2500);
-}
+function showToast(message, type) { toast.textContent = message; toast.className = `toast show ${type || ''}`; clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.className = 'toast', 3000); }
 
-// ── Events ──────────────────────────────────────────────────────────────
-generateBtn.addEventListener('click', generateRules);
-exportBtn.addEventListener('click', exportCsv);
-clearBtn.addEventListener('click', clearAll);
+$('generateBtn').addEventListener('click', generateRules);
+$('exportCsvBtn').addEventListener('click', exportCsv);
+$('clearBtn').addEventListener('click', clearAll);
+initComponents(); renderAddressFields();
 
-// Allow Enter key in FQDN fields to trigger generation
-[sourceInput, destInput].forEach(inp => {
-  inp.addEventListener('keydown', e => {
-    if (e.key === 'Enter') generateRules();
-  });
-});
 </script>
 </body>
 </html>
