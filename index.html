@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veeam Firewall Rule Generator</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --card: #1a1d28;
+    --card-hover: #22263a;
+    --border: #2a2e42;
+    --fg: #e4e6f0;
+    --muted: #8b8fa3;
+    --accent: #6c8cff;
+    --accent-hover: #5a7ae8;
+    --row-alt: #161924;
+    --danger: #f87171;
+    --success: #4ade80;
+    --warn: #fbbf24;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    padding: 24px;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+  header {
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--fg);
+    letter-spacing: -0.02em;
+  }
+  header .badges { display: flex; gap: 8px; flex-wrap: wrap; }
+  .badge {
+    font-size: 0.72rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--border);
+    color: var(--muted);
+    font-family: monospace;
+  }
+  .badge.veeam { color: var(--accent); background: rgba(108,140,255,0.12); }
+  .badge.ver { background: rgba(251,191,36,0.1); color: var(--warn); }
+
+  .config-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .config-panel.full { grid-template-columns: 1fr; }
+  .config-section h3 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .fqdn-input {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--fg);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.9rem;
+    transition: border-color 0.15s;
+  }
+  .fqdn-input:focus { outline: none; border-color: var(--accent); }
+  .fqdn-input::placeholder { color: var(--muted); opacity: 0.6; }
+
+  .checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+  }
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 0.85rem;
+    user-select: none;
+  }
+  .checkbox-label:hover { border-color: var(--accent); background: var(--card-hover); }
+  .checkbox-label input { accent-color: var(--accent); width: 15px; height: 15px; }
+
+  .action-bar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .btn {
+    padding: 10px 18px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--card);
+    color: var(--fg);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
+  .btn.danger { border-color: var(--danger); color: var(--danger); }
+  .btn.danger:hover { background: var(--danger); color: #fff; }
+
+  .stats {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  .rules-table-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .rules-table-head {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--card-hover);
+  }
+  .rules-table-head h2 { font-size: 1rem; font-weight: 600; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  thead { background: var(--bg); }
+  th {
+    text-align: left;
+    padding: 10px 16px;
+    font-weight: 600;
+    color: var(--muted);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    color: var(--fg);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: var(--row-alt); }
+  td .fqdn-val {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.78rem;
+    color: var(--accent);
+    word-break: break-all;
+  }
+  td .port-val {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.78rem;
+    color: var(--warn);
+    white-space: nowrap;
+  }
+  td .proto-val {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  td .notes-val { color: var(--muted); font-size: 0.75rem; line-height: 1.4; }
+  td .source-val, td .dest-val { font-size: 0.78rem; }
+
+  .empty-state {
+    padding: 40px;
+    text-align: center;
+    color: var(--muted);
+  }
+  .empty-state svg { margin-bottom: 12px; opacity: 0.4; }
+
+  .template-select {
+    padding: 8px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--fg);
+    font-size: 0.85rem;
+  }
+
+  .footer {
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.6;
+  }
+  .footer a { color: var(--accent); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-size: 0.85rem;
+    color: var(--fg);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.25s;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.success { border-color: var(--success); color: var(--success); }
+  .toast.error { border-color: var(--danger); color: var(--danger); }
+
+  @media (max-width: 640px) {
+    body { padding: 12px; }
+    .config-panel { grid-template-columns: 1fr; }
+    .checkbox-grid { grid-template-columns: 1fr; }
+    th, td { padding: 8px 10px; font-size: 0.75rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <h1>Veeam Firewall Rule Generator</h1>
+      <div class="badges" style="margin-top:6px">
+        <span class="badge veeam">Veeam Backup &amp; Replication v13</span>
+        <span class="badge ver">Ports reference</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="config-panel">
+    <div class="config-section">
+      <h3>Source FQDN</h3>
+      <input type="text" class="fqdn-input" id="sourceFqdn"
+             placeholder="e.g. backup01.corp.example.com or 10.0.1.5">
+    </div>
+    <div class="config-section">
+      <h3>Destination FQDN</h3>
+      <input type="text" class="fqdn-input" id="destFqdn"
+             placeholder="e.g. repo01.corp.example.com or 10.0.2.10">
+    </div>
+  </div>
+
+  <div class="config-panel full" style="margin-top:0">
+    <div class="config-section">
+      <h3>Components &amp; Roles</h3>
+      <div class="checkbox-grid" id="componentCheckboxes"></div>
+      <p style="margin-top:10px;font-size:0.75rem;color:var(--muted)">
+        Select every component that exists in your Veeam infrastructure. Rules will be generated for each selected component's required ports.
+      </p>
+    </div>
+  </div>
+
+  <div class="action-bar">
+    <button class="btn primary" id="generateBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      Generate Rules
+    </button>
+    <button class="btn" id="exportCsvBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      Export CSV
+    </button>
+    <button class="btn danger" id="clearBtn">Clear</button>
+    <span class="stats" id="ruleCount">No rules generated yet</span>
+  </div>
+
+  <div class="rules-table-wrap" id="rulesTableWrap" style="display:none">
+    <div class="rules-table-head">
+      <h2>Generated Firewall Rules</h2>
+      <span id="ruleCount2" style="font-size:0.78rem;color:var(--muted)"></span>
+    </div>
+    <div id="rulesTableBody"></div>
+  </div>
+
+  <div class="footer">
+    Generated from Veeam Backup &amp; Replication v13 ports reference.
+    Always verify against your specific deployment — this tool does not substitute for official Veeam documentation.
+    &nbsp;·&nbsp; <a href="https://helpcenter.veeam.com/docs/vbr/userguide/used_ports.html?ver=13" target="_blank" rel="noopener">Veeam Help Center</a>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Veeam v13 Port Database ─────────────────────────────────────────────
+// Each rule: { sourceRole, destRole, proto, ports, notes }
+
+const PORT_DB = [
+  // ═══════════════════════════
+  // BACKUP SERVER
+  // ═══════════════════════════
+  { src:'Backup Server', dst:'Backup Server', proto:'TCP', port:'443', notes:'Web UI and Host Management console PC, Veeam Backup & Replication console, Mount server, Veeam Infrastructure Appliance' },
+  { src:'Backup Server', dst:'Backup Server', proto:'TCP', port:'10443', notes:'Required by Veeam Software Appliances only — Web UI and Host Management console PC' },
+  { src:'Backup Server', dst:'Backup Server', proto:'TCP', port:'80', notes:'Optional. Redirects HTTP to HTTPS for web UI. Can be disabled (KB4868).' },
+  { src:'Backup Server', dst:'Backup Server', proto:'TCP', port:'22', notes:'Optional. Required only for troubleshooting Veeam Software Appliances.' },
+  { src:'Backup Server', dst:'Backup Server', proto:'UDP/TCP', port:'3389', notes:'Optional. Required only for troubleshooting Windows-based backup server.' },
+  { src:'Backup Server', dst:'Backup Server', proto:'TCP', port:'9420', notes:'[Console 12.3.2 P1+] Port used by Veeam Backup & Replication console for automatic update.' },
+  { src:'Backup Server', dst:'Backup Server', proto:'TCP', port:'6162, 2500-3300', notes:'Backup proxy, Backup repository (Linux), Backup repository (Windows), Gateway server, Mount server' },
+  { src:'Backup Server', dst:'Backup Server', proto:'TCP', port:'443', notes:'REST client' },
+  { src:'Backup Server', dst:'Backup Server', proto:'TCP', port:'9419', notes:'Required for Swagger. Optional for REST API (backward compatibility).' },
+
+  // Veeam Servers and Services (Update / AI / ONE)
+  { src:'Backup Server', dst:'Veeam Update Repository (repository.veeam.com)', proto:'TCP', port:'443 or 80', notes:'Required by Veeam Software and Infrastructure Appliances only.' },
+  { src:'Backup Server', dst:'Veeam Update Repository (local mirror)', proto:'TCP', port:'443 or 80', notes:'Required by Veeam Software and Infrastructure Appliances only. Replace with actual mirror URL.' },
+  { src:'Backup Server', dst:'Veeam Update Server (vbr.butler.veeam.com, autolk.veeam.com)', proto:'TCP', port:'443', notes:'Required for license updates and update rollout (v13.1+).' },
+  { src:'Backup Server', dst:'Veeam Update CRL distribution points (*.ss2.us, *.amazontrust.com)', proto:'TCP', port:'80', notes:'Certificate verification endpoints — subject to change. Check CRL Distribution Points and AIA fields.' },
+  { src:'Backup Server', dst:'Veeam Update Notification Server (dev.veeam.com, vbrad.butler.veeam.com, vbrce.butler.veeam.com)', proto:'TCP', port:'443', notes:'—' },
+  { src:'Backup Server', dst:'Veeam AI Assistant (rest-ai.veeam.com)', proto:'TCP', port:'443', notes:'Backup server, Console, Web UI and Host Management console PC' },
+  { src:'Backup Server', dst:'Veeam ONE Server', proto:'TCP', port:'2741, 2805', notes:'Required for Veeam ONE only.' },
+  { src:'Backup Server', dst:'Veeam ONE Web Services Server', proto:'TCP', port:'1239', notes:'Required for Veeam ONE only.' },
+
+  // Databases and External Services
+  { src:'Backup Server', dst:'PostgreSQL configuration database', proto:'TCP', port:'5432', notes:'Required for Windows-based backup servers with external configuration database.' },
+  { src:'Backup Server', dst:'Microsoft SQL Server (config DB)', proto:'TCP', port:'1433', notes:'Required for external SQL Server config DB. Alternative ports may be needed.' },
+  { src:'Backup Server', dst:'SMTP server', proto:'TCP', port:'25', notes:'—' },
+  { src:'Backup Server', dst:'SMTP server', proto:'TCP', port:'587', notes:'Required if SSL is enabled.' },
+  { src:'Backup Server', dst:'Gmail REST API (gmail.googleapis.com, accounts.google.com, gstatic.com)', proto:'TCP', port:'443', notes:'—' },
+  { src:'Backup Server', dst:'Microsoft Graph REST API (graph.microsoft.com, login.microsoftonline.com)', proto:'TCP', port:'443', notes:'—' },
+  { src:'Backup Server', dst:'NTP server', proto:'UDP', port:'123', notes:'Required by Veeam Software and Infrastructure Appliances only.' },
+  { src:'Backup Server', dst:'NTS server', proto:'UDP', port:'123', notes:'Required by Veeam Software and Infrastructure Appliances only.' },
+  { src:'Backup Server', dst:'NTS server', proto:'TCP', port:'4460', notes:'—' },
+  { src:'Any Backup Infrastructure Component', dst:'DNS server', proto:'UDP/TCP', port:'53', notes:'—' },
+  { src:'Backup Server', dst:'Certificate Revocation Lists', proto:'TCP', port:'80 or 443', notes:'Specific CRL endpoint depends on issuing CA. Check CRL Distribution Points and AIA fields.' },
+  { src:'Backup Server', dst:'Key Management System (KMIP) server', proto:'TCP', port:'5696', notes:'—' },
+  { src:'Backup Server', dst:'Syslog server', proto:'TCP/UDP', port:'514', notes:'—' },
+  { src:'Backup Server', dst:'Syslog server', proto:'TCP', port:'6514', notes:'—' },
+  { src:'Backup Server', dst:'Active Directory Domain Controllers', proto:'TCP', port:'636, 3268, 3269', notes:'—' },
+  { src:'Backup Server', dst:'Active Directory Domain Controllers', proto:'UDP/TCP', port:'389', notes:'—' },
+  { src:'Backup Server', dst:'Active Directory Domain Controllers', proto:'UDP/TCP', port:'445, 139', notes:'—' },
+  { src:'Backup Server', dst:'Active Directory Domain Controllers', proto:'UDP/TCP', port:'88', notes:'Required for Kerberos authentication when domain-joined.' },
+  { src:'Gateway Server / Backup Proxy', dst:'Active Directory Domain Controllers', proto:'TCP', port:'389', notes:'SMB (CIFS) repositories — Kerberos authentication.' },
+  { src:'Gateway Server / Backup Proxy', dst:'Active Directory Domain Controllers', proto:'TCP', port:'88', notes:'SMB (CIFS) repositories — Kerberos authentication.' },
+
+  // ═══════════════════════════
+  // BACKUP PROXIES
+  // ═══════════════════════════
+  { src:'Backup Server / Backup Proxy / Backup Repository / Mount Server / Gateway Server', dst:'Backup Proxy / Backup Proxy (direct connection)', proto:'TCP', port:'6162, 2500-3300', notes:'[Linux proxy] Different port can be specified when adding Linux servers (no prior Veeam Transport/Data Mover). 2500-3300 used for failover.' },
+  { src:'Backup Server', dst:'Backup Proxy (Microsoft Windows)', proto:'TCP', port:'445, 137, 139', notes:'Not required if Veeam Deployment Kit is installed. 137/139 are legacy — not required if SMB 1.0 not used.' },
+  { src:'Backup Server', dst:'Backup Proxy (Microsoft Windows)', proto:'TCP', port:'6160', notes:'—' },
+  { src:'Backup Server', dst:'Backup Proxy (Linux)', proto:'TCP', port:'22', notes:'—' },
+  { src:'Backup Server', dst:'Backup Proxy (Linux)', proto:'TCP', port:'6160', notes:'—' },
+
+  // ═══════════════════════════
+  // GATEWAY SERVERS
+  // ═══════════════════════════
+  { src:'Backup Server / Backup Proxy / Hyper-V server / On-prem backup repository / Gateway server (Veeam Data Cloud Vault) / VM Guest OS', dst:'Gateway Server / Gateway server for Veeam Data Cloud Vault', proto:'TCP', port:'6162, 2500-3300', notes:'[Linux gateway] Different port can be specified when adding Linux servers. 2500-3300 for failover.' },
+  { src:'Backup Server', dst:'Gateway Server (Microsoft Windows)', proto:'TCP', port:'445, 137, 139', notes:'Not required if Veeam Deployment Kit is installed. 137/139 are legacy.' },
+  { src:'Backup Server', dst:'Gateway Server (Microsoft Windows)', proto:'TCP', port:'6160', notes:'—' },
+  { src:'Backup Server', dst:'Gateway Server (Linux)', proto:'TCP', port:'22', notes:'—' },
+  { src:'Backup Server', dst:'Gateway Server (Linux)', proto:'TCP', port:'6160', notes:'—' },
+  { src:'Mount server running vPower NFS Service', dst:'Gateway server working with backup repository', proto:'TCP', port:'6162, 2500-3300', notes:'Required for Instant Recovery, SureBackup, and Linux file-level recovery.' },
+
+  // ═══════════════════════════
+  // BACKUP REPOSITORIES — Common
+  // ═══════════════════════════
+  { src:'Mount server running vPower NFS Service', dst:'Backup Repository', proto:'TCP', port:'6162, 2500-3300', notes:'Required for Instant Recovery, SureBackup, and Linux file-level recovery.' },
+  { src:'Veeam Backup & Replication console / Backup proxy / Hyper-V server (off-host proxy)', dst:'Backup Repository', proto:'TCP', port:'6162, 2500-3300', notes:'[Linux repository] Different port can be specified when adding. 2500-3300 for failover.' },
+
+  // Backup Repositories — Windows/Linux
+  { src:'Backup Server', dst:'Backup Repository', proto:'TCP', port:'6160', notes:'—' },
+  { src:'Backup Server', dst:'Backup Repository (Microsoft Windows)', proto:'TCP', port:'445, 137, 139', notes:'Not required if Veeam Deployment Kit is installed. 137/139 are legacy.' },
+  { src:'Backup Server', dst:'Backup Repository (Linux)', proto:'TCP', port:'22', notes:'—' },
+  { src:'Source Backup Repository', dst:'Target Backup Repository', proto:'TCP', port:'6162, 2500-3300', notes:'Required for backup copy jobs. Open WAN accelerator ports if WAN accelerators are used.' },
+
+  // NFS / SMB / DDB / HPE StoreOnce
+  { src:'Gateway server or Backup proxy', dst:'NFS backup repository', proto:'TCP/UDP', port:'111, 2049', notes:'—' },
+  { src:'Gateway server or Backup proxy', dst:'NFS backup repository (NFS v3)', proto:'TCP/UDP', port:'mountd_port, statd_port, lockd_port', notes:'These ports can be assigned statically.' },
+  { src:'Gateway server or Backup proxy', dst:'SMB (CIFS) backup repository (Windows)', proto:'TCP', port:'445', notes:'Transmission channel from gateway server to SMB repository.' },
+  { src:'Backup server / Gateway server', dst:'Dell Data Domain', proto:'TCP', port:'111', notes:'Random port assignment for mountd (NFS and DDBOOST). Can be statically assigned.' },
+  { src:'Backup server / Gateway server', dst:'Dell Data Domain', proto:'TCP', port:'2049', notes:'Main NFS port. Can be modified via nfs set server-port.' },
+  { src:'Backup server / Gateway server', dst:'Dell Data Domain', proto:'TCP', port:'2052', notes:'Main NFS MOUNTD port. Can be modified via nfs set mountd-port.' },
+  { src:'Backup server or Gateway server', dst:'HPE StoreOnce', proto:'TCP', port:'9387', notes:'—' },
+  { src:'Backup server or Gateway server', dst:'HPE StoreOnce', proto:'TCP', port:'9388', notes:'—' },
+
+  // Deduplicating appliances (ExaGrid, DXi, etc.)
+  { src:'Backup Server', dst:'Deduplicating appliance', proto:'TCP', port:'22', notes:'—' },
+  { src:'Backup Server', dst:'Deduplicating appliance', proto:'TCP', port:'6162, 2500-3300, 6160', notes:'2500-3300 for failover if 6162 unavailable.' },
+
+  // Veeam Data Cloud Vault
+  { src:'Backup Server / Backup Proxy (direct) / Gateway Server / Instant Recovery to Azure helper appliance', dst:'Veeam Data Cloud Vault (storage-account.blob.core.windows.net, storage-account.blob.storage.azure.net, vdc-vault-integration-prod.veeamdatacloud.com, cloud.veeam.com)', proto:'TCP', port:'443', notes:'Replace <storage-account> with your vault ID.' },
+  { src:'Backup Server / Backup Proxy / Gateway Server / helper appliance', dst:'Veeam Data Cloud Vault CRL distribution points', proto:'TCP', port:'80', notes:'Certificate verification. Check Microsoft article for current endpoints.' },
+  { src:'Backup Server', dst:'Microsoft Entra ID (login.microsoftonline.com, login.windows.net)', proto:'TCP', port:'443', notes:'—' },
+  { src:'Backup Server', dst:'Veeam Update Server (vbr.butler.veeam.com, autolk.veeam.com)', proto:'TCP', port:'443', notes:'License auto-update over HTTPS.' },
+
+  // Veeam Data Cloud Vault (AWS Edition)
+  { src:'Backup Server / Backup Proxy / Gateway Server / Amazon EC2 helper appliance', dst:'Veeam Data Cloud Vault (AWS Edition) (*.amazonaws.com)', proto:'TCP', port:'443', notes:'Global and Government regions.' },
+  { src:'Backup Server / Backup Proxy / Gateway Server / helper appliance', dst:'Veeam Data Cloud Vault (AWS Edition)', proto:'TCP', port:'80', notes:'CRL/OCSP certificate verification.' },
+
+  // Object Storage Repositories
+  { src:'Backup Server', dst:'Smart Object Storage API (SOSAPI) S3 object storage', proto:'TCP', port:'443', notes:'—' },
+  { src:'Backup Proxy (direct) / Gateway Server or Backup Server / Amazon EC2 helper appliance', dst:'Amazon S3 object storage (*.amazonaws.com, *.amazonaws.com.cn)', proto:'TCP', port:'443', notes:'Global/Government: *.amazonaws.com. China: *.amazonaws.com.cn.' },
+  { src:'Backup Proxy (direct) / Gateway Server or Backup Server / helper appliance', dst:'Amazon S3 CRL distribution points (*.amazontrust.com)', proto:'TCP', port:'80', notes:'Certificate verification. Subject to change.' },
+  { src:'Backup Proxy (direct) / Gateway Server or Backup Server / helper appliance', dst:'S3 compatible object storage', proto:'TCP', port:'Depends on device', notes:'—' },
+  { src:'Backup Proxy (direct) / Gateway Server or Backup Server / Instant Recovery to Azure helper appliance', dst:'Microsoft Azure object storage (storage-account.blob.core.windows.net, storage-account.blob.storage.azure.net, storage-account.blob.core.chinacloudapi.cn, storage-account.blob.core.usgovcloudapi.net)', proto:'TCP', port:'443', notes:'Replace <storage-account> with actual storage account URL.' },
+  { src:'Backup Proxy (direct) / Gateway Server or Backup Server / helper appliance', dst:'Microsoft Azure CRL distribution points', proto:'TCP', port:'80', notes:'Certificate verification.' },
+  { src:'Backup Proxy (direct) / Gateway Server or Backup Server / helper appliance', dst:'Google Cloud CRL distribution points (storage.googleapis.com)', proto:'TCP', port:'443', notes:'—' },
+  { src:'Backup Proxy (direct) / Gateway Server or Backup Server / helper appliance', dst:'Google Cloud CRL distribution points (ocsp.pki.goog, pki.goog, crl.pki.goog)', proto:'TCP', port:'80', notes:'Certificate verification.' },
+  { src:'Backup Proxy (direct) / Gateway Server or Backup Server / helper appliance', dst:'IBM Cloud object storage', proto:'TCP', port:'Depends on device', notes:'—' },
+
+  // Scale-Out Backup Repositories
+  { src:'Source extent', dst:'Target extent', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+  { src:'Target extent', dst:'Source extent', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+
+  // External Repositories
+  { src:'Gateway server / Backup server / Instant Recovery to Azure helper appliance', dst:'Amazon S3 object storage (*.amazonaws.com, *.amazonaws.com.cn)', proto:'TCP', port:'443', notes:'—' },
+  { src:'Gateway server / Backup server / helper appliance', dst:'Amazon S3 CRL distribution points (*.amazontrust.com)', proto:'TCP', port:'80', notes:'—' },
+  { src:'Gateway server / Backup server / helper appliance', dst:'Microsoft Azure object storage', proto:'TCP', port:'443', notes:'—' },
+  { src:'Gateway server / Backup server / helper appliance', dst:'Microsoft Azure CRL distribution points', proto:'TCP', port:'80', notes:'—' },
+  { src:'Gateway server / Backup server / helper appliance', dst:'Google Cloud CRL distribution points (storage.googleapis.com)', proto:'TCP', port:'443', notes:'—' },
+  { src:'Gateway server / Backup server / helper appliance', dst:'Google Cloud CRL distribution points (ocsp.pki.goog, pki.goog, crl.pki.goog)', proto:'TCP', port:'80', notes:'—' },
+
+  // Archive Object Storage Repositories
+  { src:'Gateway server or Backup server', dst:'Amazon EC2 helper appliance', proto:'TCP', port:'443', notes:'Direct connection to AWS endpoints required. HTTP/HTTPS proxies not supported.' },
+  { src:'Gateway server or Backup server', dst:'Amazon EC2 helper appliance', proto:'TCP', port:'22', notes:'—' },
+  { src:'Gateway server or Backup server', dst:'Microsoft Azure proxy appliance', proto:'TCP', port:'443', notes:'—' },
+  { src:'Gateway server or Backup server', dst:'Microsoft Azure proxy appliance', proto:'TCP', port:'22', notes:'—' },
+  { src:'Amazon EC2 helper appliance', dst:'Amazon S3 object storage (*.amazonaws.com, *.amazonaws.com.cn)', proto:'TCP', port:'443', notes:'—' },
+  { src:'Amazon EC2 helper appliance', dst:'Amazon S3 CRL distribution points (*.amazontrust.com)', proto:'TCP', port:'80', notes:'—' },
+  { src:'Microsoft Azure proxy appliance', dst:'Microsoft Azure object storage', proto:'TCP', port:'443', notes:'—' },
+  { src:'Microsoft Azure proxy appliance', dst:'Microsoft Azure CRL distribution points', proto:'TCP', port:'80', notes:'—' },
+
+  // Application Backup Repositories
+  { src:'Backup Server', dst:'Application Backup Repository', proto:'TCP', port:'6960', notes:'—' },
+
+  // Mount Servers
+  { src:'Veeam Backup & Replication console', dst:'Mount server', proto:'TCP', port:'6162, 2500-3300', notes:'Required for guest OS file-level restore. Not required if mount server on same machine as console.' },
+  { src:'Backup Server', dst:'Mount server', proto:'TCP', port:'445', notes:'Not required if Veeam Deployment Kit is installed.' },
+  { src:'Backup Server', dst:'Mount server', proto:'TCP', port:'6160', notes:'—' },
+  { src:'Backup Server', dst:'Mount server', proto:'TCP', port:'6162, 2500-3300', notes:'—' },
+  { src:'Backup Server', dst:'Mount server', proto:'TCP', port:'6170', notes:'—' },
+  // Mount Servers with vPower NFS
+  { src:'Backup Server', dst:'Mount server running vPower NFS Service', proto:'TCP', port:'6160', notes:'—' },
+  { src:'Backup Server', dst:'Mount server running vPower NFS Service', proto:'TCP', port:'6161', notes:'—' },
+  { src:'ESXi host', dst:'Mount server running vPower NFS Service', proto:'TCP/UDP', port:'111', notes:'—' },
+  { src:'ESXi host', dst:'Mount server running vPower NFS Service', proto:'TCP/UDP', port:'1058+ or 1063+', notes:'Default mount port. 1058+ if vPower NFS on backup server; 1063+ if on separate Windows machine.' },
+  { src:'ESXi host', dst:'Mount server running vPower NFS Service', proto:'TCP/UDP', port:'2049+', notes:'—' },
+  { src:'Backup repository or Gateway server working with backup repository', dst:'Mount server running vPower NFS Service', proto:'TCP', port:'6162, 2500-3300', notes:'Required for Instant Recovery, SureBackup or Linux file-level recovery.' },
+
+  // Storage Systems — summary rows for common patterns
+  { src:'Backup Server', dst:'Dell Unity XT / Unity storage system', proto:'TCP', port:'443', notes:'—' },
+  { src:'Backup Proxy', dst:'Dell Unity XT / Unity storage system', proto:'TCP', port:'3260', notes:'iSCSI connectivity.' },
+  { src:'Backup Proxy', dst:'Dell Unity XT / Unity storage system', proto:'TCP/UDP', port:'111, 2049', notes:'NFS connectivity.' },
+  { src:'Backup Server', dst:'Dell PowerScale (Isilon) storage system', proto:'TCP', port:'8080', notes:'—' },
+  { src:'Backup Proxy', dst:'Dell PowerScale storage system', proto:'TCP/UDP', port:'111, 2049', notes:'NFS connectivity.' },
+  { src:'Backup Proxy', dst:'Dell PowerScale storage system', proto:'TCP', port:'445', notes:'SMB connectivity.' },
+  { src:'Backup Server', dst:'HPE 3PAR StoreServ storage system', proto:'TCP', port:'8008', notes:'HTTP communication.' },
+  { src:'Backup Server', dst:'HPE 3PAR StoreServ storage system', proto:'TCP', port:'8080', notes:'HTTPS communication.' },
+  { src:'Backup Server', dst:'HPE 3PAR StoreServ storage system', proto:'TCP', port:'22', notes:'SSH communication.' },
+  { src:'Backup Proxy', dst:'HPE 3PAR StoreServ storage system', proto:'TCP', port:'3260', notes:'iSCSI connectivity.' },
+  { src:'Backup Server', dst:'HPE Alletra MP B10000 / Alletra 9000 / Primera storage system', proto:'TCP', port:'443', notes:'HTTPS communication.' },
+  { src:'Backup Server', dst:'HPE Alletra MP B10000 / Alletra 9000 / Primera storage system', proto:'TCP', port:'22', notes:'SSH communication.' },
+  { src:'Backup Proxy', dst:'HPE Alletra MP B10000 / Alletra 9000 / Primera storage system', proto:'TCP', port:'3260', notes:'iSCSI connectivity.' },
+  { src:'Backup Proxy', dst:'HPE Alletra MP B10000 / Alletra 9000', proto:'TCP', port:'4420, 8009', notes:'NVMe-oF connectivity.' },
+  { src:'Backup Server', dst:'HPE Alletra 5000 / Alletra 6000 / Nimble storage system', proto:'TCP', port:'5392', notes:'—' },
+  { src:'Backup Proxy', dst:'HPE Alletra 5000 / Alletra 6000 / Nimble storage system', proto:'TCP', port:'3260', notes:'iSCSI connectivity.' },
+  { src:'Backup Server', dst:'Storage system (Lenovo ThinkSystem DM/DG, NetApp ONTAP)', proto:'TCP', port:'80', notes:'HTTP communication.' },
+  { src:'Backup Server', dst:'Storage system (Lenovo ThinkSystem DM/DG, NetApp ONTAP)', proto:'TCP', port:'443', notes:'HTTPS communication.' },
+  { src:'Backup Proxy', dst:'Storage system (Lenovo ThinkSystem DM/DG, NetApp ONTAP)', proto:'TCP/UDP', port:'111, 2049, 635', notes:'NFS connectivity.' },
+  { src:'Backup Proxy', dst:'Storage system (Lenovo ThinkSystem DM/DG, NetApp ONTAP)', proto:'TCP', port:'445', notes:'SMB connectivity (built-in storage systems).' },
+  { src:'Backup Proxy', dst:'Storage system (Lenovo ThinkSystem DM/DG, NetApp ONTAP)', proto:'TCP', port:'3260', notes:'iSCSI connectivity.' },
+  { src:'Backup Server', dst:'Nutanix Files storage system', proto:'TCP', port:'9440', notes:'—' },
+  { src:'Backup Proxy', dst:'Nutanix Files storage system', proto:'TCP/UDP', port:'111, 2049, 20048', notes:'NFS connectivity.' },
+  { src:'Backup Proxy', dst:'Nutanix Files storage system', proto:'TCP', port:'445', notes:'SMB connectivity.' },
+  { src:'Backup Server', dst:'Storage system (DataCore, Dell PowerStore, Hitachi VSP, HPE XP, INFINIDAT, NEC, NetApp SolidFire)', proto:'TCP', port:'443', notes:'HTTPS communication.' },
+  { src:'Backup Proxy', dst:'Storage system (DataCore, Dell PowerStore, Hitachi VSP, HPE XP, INFINIDAT, NEC, NetApp SolidFire)', proto:'TCP', port:'3260', notes:'iSCSI connectivity.' },
+  { src:'Backup Server', dst:'Dell SC Series storage system', proto:'TCP', port:'3033', notes:'HTTPS communication.' },
+  { src:'Backup Proxy', dst:'Dell SC Series storage system', proto:'TCP', port:'3260', notes:'iSCSI connectivity.' },
+  { src:'Backup Server', dst:'Dell PowerMax storage system', proto:'TCP', port:'8443', notes:'HTTPS communication.' },
+  { src:'Backup Proxy', dst:'Dell PowerMax storage system', proto:'TCP', port:'3260', notes:'iSCSI connectivity.' },
+  { src:'Backup Server', dst:'Storage system (Fsas ETERNUS DX/AF, IBM FlashSystem, NEC M Series)', proto:'TCP', port:'22', notes:'SSH communication.' },
+  { src:'Backup Proxy', dst:'Storage system (Fsas ETERNUS DX/AF, IBM FlashSystem, NEC M Series)', proto:'TCP', port:'3260', notes:'iSCSI connectivity.' },
+  { src:'Backup Server', dst:'Storage system (Everpure FlashArray, Tintri IntelliFlash)', proto:'TCP', port:'443', notes:'HTTPS communication.' },
+  { src:'Backup Proxy', dst:'Storage system (Everpure FlashArray, Tintri IntelliFlash)', proto:'TCP', port:'3260', notes:'iSCSI connectivity.' },
+  { src:'Backup Proxy', dst:'Storage system (Everpure FlashArray, Tintri IntelliFlash)', proto:'TCP/UDP', port:'111, 2049', notes:'NFS connectivity.' },
+
+  // HA Cluster
+  { src:'Backup Server (primary or standby)', dst:'PostgreSQL configuration database', proto:'TCP', port:'5432', notes:'Connection from each cluster member to its own config DB.' },
+  { src:'Backup Server Cluster member', dst:'Backup Server Cluster member', proto:'TCP', port:'8008, 8500', notes:'—' },
+
+  // VMware vSphere
+  { src:'Backup Server', dst:'vCenter Server', proto:'TCP', port:'443', notes:'Direct connection required. HTTP/HTTPS proxies not supported.' },
+  { src:'Backup Proxy', dst:'vCenter Server', proto:'TCP', port:'443', notes:'Can be customized in vCenter settings.' },
+  { src:'Backup Proxy', dst:'ESXi server', proto:'TCP', port:'902', notes:'Not required for VMware Cloud on AWS.' },
+  { src:'Backup Proxy', dst:'ESXi server', proto:'TCP', port:'443', notes:'Not required if vCenter connection or VMware Cloud on AWS used.' },
+  { src:'Backup Server', dst:'ESXi server', proto:'TCP', port:'443', notes:'Not required for VMware Cloud on AWS.' },
+  { src:'Backup Server', dst:'ESXi server', proto:'TCP', port:'902', notes:'Not required for VMware Cloud on AWS.' },
+  { src:'Backup Server', dst:'VMware Cloud Director', proto:'TCP', port:'443', notes:'Direct connection required. HTTP/HTTPS proxies not supported.' },
+
+  // Microsoft Hyper-V
+  { src:'Backup Server', dst:'SCVMM', proto:'TCP', port:'8732', notes:'—' },
+  { src:'Backup Server', dst:'SCVMM', proto:'TCP', port:'445, 137, 139', notes:'Not required if Veeam Deployment Kit installed. 137/139 legacy.' },
+  { src:'Backup Server', dst:'SCVMM', proto:'TCP', port:'6160', notes:'—' },
+  { src:'Backup Server', dst:'SCVMM', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+  { src:'Backup Server', dst:'Hyper-V server', proto:'TCP', port:'445, 135, 137, 139', notes:'Not required if Veeam Deployment Kit installed. 137/139 legacy.' },
+  { src:'Backup Server', dst:'Hyper-V server', proto:'TCP', port:'6160', notes:'—' },
+  { src:'Backup Server', dst:'Hyper-V server', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+  { src:'Backup Server', dst:'Hyper-V server', proto:'TCP', port:'6163', notes:'—' },
+  { src:'Backup Server', dst:'Hyper-V server', proto:'TCP', port:'2179', notes:'Required for Instant Recovery to Hyper-V and Recovery Verification.' },
+  { src:'Backup Server', dst:'Hyper-V server', proto:'TCP', port:'49152-65535', notes:'Dynamic RPC ports. Not needed with default Windows firewall. Configure if using custom firewall or RPC errors.' },
+  { src:'Microsoft Windows/Linux backup repository', dst:'Hyper-V server', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+  { src:'Hyper-V server / Off-host backup proxy', dst:'Hyper-V server', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+  { src:'Backup Server', dst:'Microsoft SMB3 server (Hyper-V storage)', proto:'TCP', port:'6160', notes:'—' },
+  { src:'Backup Server', dst:'Microsoft SMB3 server (Hyper-V storage)', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+  { src:'Backup Server', dst:'Microsoft SMB3 server (Hyper-V storage)', proto:'TCP', port:'6163', notes:'—' },
+
+  // Off-Host Backup Proxies (Hyper-V)
+  { src:'Backup Server', dst:'Hyper-V server / Off-host backup proxy', proto:'TCP', port:'445, 135, 137, 139', notes:'Not required if Veeam Deployment Kit installed. 137/139 legacy.' },
+  { src:'Backup Server', dst:'Hyper-V server / Off-host backup proxy', proto:'TCP', port:'6160', notes:'—' },
+  { src:'Backup Server', dst:'Hyper-V server / Off-host backup proxy', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+  { src:'Backup Server', dst:'Hyper-V server / Off-host backup proxy', proto:'TCP', port:'6163', notes:'—' },
+  { src:'Backup Server', dst:'Hyper-V server / Off-host backup proxy', proto:'TCP', port:'49152-65535', notes:'Dynamic RPC ports — configure if not using default Windows firewall.' },
+  { src:'Backup Server', dst:'Off-host backup proxy', proto:'TCP', port:'6210', notes:'Required for VSS snapshot during SMB file share backup.' },
+
+  // Other Hyper-V components
+  { src:'SCVMM', dst:'Backup Server', proto:'TCP', port:'443', notes:'—' },
+  { src:'Hyper-V server / Off-host backup proxy', dst:'Gateway server', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+
+  // Unstructured Data — Sources
+  { src:'Backup Server', dst:'File server (Windows or Linux)', proto:'TCP', port:'6160', notes:'—' },
+  { src:'Backup Server', dst:'File server (Windows or Linux)', proto:'TCP', port:'6210', notes:'VSS snapshot during SMB file share backup (Windows backup server).' },
+  { src:'Backup Server', dst:'File server (Windows or Linux)', proto:'TCP', port:'6162, 2500-3300', notes:'—' },
+  { src:'Backup Proxy', dst:'NAS filer (NetApp Data ONTAP or Lenovo ThinkSystem DM/DG)', proto:'TCP/UDP', port:'111, 2049', notes:'NFS.' },
+  { src:'Backup Proxy', dst:'NAS filer (NetApp Data ONTAP or Lenovo ThinkSystem DM/DG)', proto:'TCP', port:'445', notes:'SMB.' },
+  { src:'Backup Proxy', dst:'NAS filer (NetApp Data ONTAP or Lenovo ThinkSystem DM/DG)', proto:'TCP/UDP', port:'635', notes:'—' },
+  { src:'Backup Proxy', dst:'NAS filer (NetApp Data ONTAP or Lenovo ThinkSystem DM/DG)', proto:'TCP', port:'80, 443', notes:'NetApp SnapDiff when CFT enabled.' },
+  { src:'Backup Proxy', dst:'NAS filer (Dell PowerScale/Isilon or Nutanix Files)', proto:'TCP/UDP', port:'111, 2049', notes:'NFS.' },
+  { src:'Backup Proxy', dst:'NAS filer (Dell PowerScale/Isilon or Nutanix Files)', proto:'TCP', port:'445', notes:'SMB.' },
+  { src:'Backup Proxy', dst:'NAS filer (Dell PowerScale/Isilon or Nutanix Files)', proto:'TCP', port:'20048', notes:'NFS.' },
+  { src:'Cache repository', dst:'NAS filer (NetApp Data ONTAP)', proto:'TCP', port:'80, 443, 2049', notes:'NetApp SnapDiff CFT. Port 2049 only if cache repo is Linux.' },
+  { src:'File server (Windows or Linux) / Backup proxy / Tape server', dst:'NFS share', proto:'TCP/UDP', port:'111, 2049', notes:'—' },
+  { src:'File server (Windows or Linux) / Mount server / Backup proxy / Tape server', dst:'SMB share', proto:'TCP', port:'445', notes:'—' },
+  { src:'Mount server', dst:'SMB share', proto:'TCP', port:'137-139', notes:'CIFS.' },
+  { src:'File server (Windows or Linux) / Backup proxy / Tape server', dst:'Amazon S3 object storage (*.amazonaws.com, *.amazonaws.com.cn)', proto:'TCP', port:'443', notes:'—' },
+  { src:'File server (Windows or Linux) / Backup proxy / Tape server', dst:'Amazon CRL distribution points (*.amazontrust.com)', proto:'TCP', port:'80', notes:'Certificate verification.' },
+  { src:'File server (Windows or Linux) / Backup proxy / Tape server', dst:'Microsoft Azure object storage', proto:'TCP', port:'443', notes:'—' },
+  { src:'File server (Windows or Linux) / Backup proxy / Tape server', dst:'Microsoft Azure CRL distribution points', proto:'TCP', port:'80', notes:'Certificate verification.' },
+  { src:'File server (Windows or Linux) / Backup proxy / Tape server', dst:'S3 compatible object storage', proto:'TCP', port:'Depends on device', notes:'—' },
+
+  // Cache Repositories
+  { src:'Backup server / File server (Windows or Linux) / Backup proxy', dst:'Cache repository', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+  { src:'Backup Server', dst:'Cache repository', proto:'TCP', port:'6160', notes:'—' },
+  { src:'Backup Server', dst:'Cache repository (Linux)', proto:'TCP', port:'22', notes:'—' },
+  { src:'Old cache repository', dst:'New cache repository', proto:'TCP', port:'2500-3300', notes:'Metadata migration during cache repo change.' },
+  { src:'New cache repository', dst:'Old cache repository', proto:'TCP', port:'2500-3300', notes:'Metadata migration during cache repo change.' },
+
+  // Primary/Secondary/Archive Repositories
+  { src:'Primary backup repository', dst:'Archive repository', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+  { src:'Cache repository', dst:'Primary or secondary backup repository', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+
+  // NDMP Servers
+  { src:'Gateway server', dst:'NDMP server', proto:'NDMP', port:'10000', notes:'Additional port range for data transfer depends on NDMP server config.' },
+
+  // Unstructured — Other components
+  { src:'File server (Windows or Linux) / Backup proxy', dst:'Backup Server', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+  { src:'Backup Server', dst:'Backup Proxy', proto:'TCP', port:'6160', notes:'—' },
+  { src:'Backup Server', dst:'Backup Proxy', proto:'TCP', port:'6210', notes:'VSS snapshot during SMB file share backup.' },
+  { src:'Backup Server', dst:'Backup Proxy', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+  { src:'Backup Server', dst:'Mount server', proto:'TCP', port:'443, 445, 6170', notes:'Required for Instant File Share Recovery.' },
+  { src:'Cache repository', dst:'Gateway server', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+
+  // Unstructured — AD
+  { src:'Backup proxy / File server (Windows or Linux) / Tape server', dst:'Active Directory Domain Controllers', proto:'TCP', port:'389', notes:'—' },
+  { src:'Backup proxy / File server (Windows or Linux) / Tape server', dst:'Active Directory Domain Controllers', proto:'TCP', port:'88', notes:'Kerberos authentication.' },
+
+  // Tape Device Support
+  { src:'Tape server', dst:'Backup Server', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+  { src:'Backup Server', dst:'Tape server', proto:'TCP', port:'6160', notes:'—' },
+  { src:'Backup Server', dst:'Tape server', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+  { src:'Backup Server', dst:'Tape server', proto:'TCP', port:'6166', notes:'—' },
+  { src:'Backup Server', dst:'Tape server (Windows)', proto:'TCP', port:'445, 137, 139', notes:'Not required if Veeam Deployment Kit installed. 137/139 legacy.' },
+  { src:'Backup Server', dst:'Tape server (Linux)', proto:'TCP', port:'22', notes:'—' },
+  { src:'Tape server', dst:'Backup repository', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+  { src:'Tape server', dst:'Gateway server', proto:'TCP', port:'6162, 2500-3300', notes:'—' },
+  { src:'Tape server', dst:'NFS share', proto:'TCP/UDP', port:'111, 2049', notes:'—' },
+  { src:'Tape server', dst:'SMB share', proto:'TCP', port:'445', notes:'—' },
+
+  // WAN Acceleration
+  { src:'Backup Server', dst:'WAN accelerator (source and target)', proto:'TCP', port:'445, 137, 139', notes:'Not required if Veeam Deployment Kit installed. 137/139 legacy.' },
+  { src:'Backup Server', dst:'WAN accelerator (source and target)', proto:'TCP', port:'6160', notes:'—' },
+  { src:'Backup Server', dst:'WAN accelerator (source and target)', proto:'TCP', port:'6162', notes:'Default port for Veeam Transport Service (Veeam Data Mover Service on Windows).' },
+  { src:'Backup Server', dst:'WAN accelerator (source and target)', proto:'TCP', port:'6164', notes:'—' },
+  { src:'Backup Server', dst:'WAN accelerator (target)', proto:'TCP', port:'6220', notes:'Traffic control (throttling) for tenants. Required only in Veeam Cloud Connect infrastructure.' },
+  { src:'WAN accelerator (source and target)', dst:'WAN accelerator (source and target)', proto:'TCP', port:'6164', notes:'—' },
+  { src:'WAN accelerator (source and target)', dst:'WAN accelerator (source and target)', proto:'TCP', port:'6165', notes:'Must be open between sites where WAN accelerators are deployed.' },
+  { src:'WAN accelerator (target)', dst:'Backup repository (target)', proto:'TCP', port:'2500-3300', notes:'—' },
+  { src:'WAN accelerator (source)', dst:'Backup repository (source)', proto:'TCP', port:'2500-3300', notes:'—' },
+
+  // Guest Processing — Guest Interaction Proxies
+  { src:'Backup Server', dst:'Guest interaction proxy', proto:'TCP', port:'445, 135', notes:'Adding Windows machines using local admin credentials. Kerberos domain account with admin privileges.' },
+  { src:'Backup Server', dst:'Guest interaction proxy', proto:'TCP', port:'6160', notes:'Adding Windows and Linux machines using certificate-based auth. Deployment kit must be pre-installed on VMs.' },
+  { src:'Backup Server', dst:'Guest interaction proxy', proto:'TCP', port:'22', notes:'Adding Linux machines using SSH credentials.' },
+  { src:'Backup Server', dst:'Guest interaction proxy', proto:'TCP', port:'6190', notes:'Non-persistent runtime components.' },
+
+  // Guest Processing — Protected Workloads
+  { src:'Guest interaction proxy', dst:'VM guest OS (Microsoft Windows)', proto:'TCP', port:'445, 135', notes:'NOT required in networkless mode over vSphere Web Services or PowerShell Direct.' },
+  { src:'Guest interaction proxy', dst:'VM guest OS (Microsoft Windows)', proto:'TCP', port:'6173', notes:'NOT required in networkless mode.' },
+  { src:'Guest interaction proxy', dst:'VM guest OS (Linux)', proto:'TCP', port:'22', notes:'NOT required in networkless mode.' },
+  { src:'Backup Server', dst:'VM guest OS (Linux)', proto:'TCP', port:'22', notes:'Persistent agent components.' },
+  { src:'Backup Server', dst:'VM guest OS (Linux)', proto:'TCP', port:'2500-3300', notes:'Persistent agent components.' },
+  { src:'Guest interaction proxy', dst:'VM guest OS (Linux)', proto:'TCP', port:'6160', notes:'—' },
+  { src:'Guest interaction proxy', dst:'VM guest OS (Linux)', proto:'TCP', port:'6162', notes:'Required if used as control channel instead of SSH.' },
+  { src:'Guest interaction proxy', dst:'VM guest OS (Windows)', proto:'TCP', port:'6160, 11731', notes:'Port 11731 for failover if 6160 unavailable.' },
+  { src:'Guest interaction proxy', dst:'VM guest OS (Windows)', proto:'TCP', port:'6173', notes:'—' },
+
+  // Guest Processing — Gateway Servers
+  { src:'Guest interaction proxy', dst:'Gateway server', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+
+  // Guest Processing — Hypervisors
+  { src:'Guest interaction proxy', dst:'ESXi server', proto:'TCP', port:'443', notes:'Required for non-persistent runtime components. [vSphere < 6.5] Not required if vCenter used. vSphere 6.5+ port 443 required by vCenter Web Services.' },
+
+  // Log Shipping — Log Shipping Servers
+  { src:'Backup Server', dst:'Log shipping server', proto:'TCP', port:'445, 135, 137, 139', notes:'Not required if Veeam Deployment Kit installed. 137/139 legacy.' },
+  { src:'Backup Server', dst:'Log shipping server', proto:'TCP', port:'6160', notes:'—' },
+  { src:'Backup Server', dst:'Log shipping server', proto:'TCP', port:'6162', notes:'—' },
+  { src:'Hyper-V host', dst:'Log shipping server (backup server)', proto:'TCP', port:'6162, 2500-3300', notes:'Required only if transferring over PowerShell Direct.' },
+  { src:'VM guest OS (MS SQL / Oracle / PostgreSQL)', dst:'Log shipping server', proto:'TCP', port:'6162, 2500-3300', notes:'—' },
+
+  // Log Shipping — MS SQL Guest OS
+  { src:'Guest interaction proxy', dst:'MS SQL VM guest OS', proto:'TCP', port:'445, 135, 137, 139', notes:'Non-persistent runtime components only. Not required in networkless mode or if Deployment Kit installed.' },
+  { src:'Guest interaction proxy', dst:'MS SQL VM guest OS', proto:'TCP', port:'6173', notes:'—' },
+  { src:'Guest interaction proxy', dst:'MS SQL VM guest OS', proto:'TCP', port:'6160, 11731', notes:'Persistent agent components only. 11731 for failover.' },
+  { src:'Guest interaction proxy', dst:'MS SQL VM guest OS', proto:'TCP', port:'6167', notes:'—' },
+
+  // Log Shipping — Oracle Guest OS
+  { src:'Guest interaction proxy', dst:'Oracle VM guest OS (Windows)', proto:'TCP', port:'445, 135', notes:'Non-persistent runtime components only.' },
+  { src:'Guest interaction proxy', dst:'Oracle VM guest OS (Windows)', proto:'TCP', port:'6173', notes:'—' },
+  { src:'Guest interaction proxy', dst:'Oracle VM guest OS (Windows)', proto:'TCP', port:'6160, 11731', notes:'Persistent agent components only. 11731 for failover.' },
+  { src:'Guest interaction proxy', dst:'Oracle VM guest OS (Windows)', proto:'TCP', port:'6167', notes:'—' },
+  { src:'Guest interaction proxy', dst:'Oracle VM guest OS (Linux)', proto:'TCP', port:'2500-3300', notes:'NOT required in networkless mode.' },
+  { src:'Guest interaction proxy', dst:'Oracle VM guest OS (Linux)', proto:'TCP', port:'22', notes:'Non-persistent runtime components only. NOT required in networkless mode.' },
+  { src:'Guest interaction proxy', dst:'Oracle VM guest OS (Linux)', proto:'TCP', port:'6162', notes:'Persistent agent components only. Control channel instead of SSH.' },
+
+  // Log Shipping — PostgreSQL Guest OS
+  { src:'Guest interaction proxy', dst:'PostgreSQL VM guest OS', proto:'TCP', port:'22', notes:'Non-persistent runtime components only. NOT required in networkless mode.' },
+  { src:'Guest interaction proxy', dst:'PostgreSQL VM guest OS', proto:'TCP', port:'6162', notes:'Persistent agent components only. Control channel instead of SSH.' },
+  { src:'Guest interaction proxy', dst:'PostgreSQL VM guest OS', proto:'TCP', port:'2500-3300', notes:'NOT required in networkless mode.' },
+
+  // Log Shipping — Backup Repositories
+  { src:'Log shipping server', dst:'Backup repository', proto:'TCP', port:'6162 or 2500-3300', notes:'2500-3300 for failover.' },
+  { src:'VM guest OS (MS SQL / Oracle / PostgreSQL)', dst:'Backup repository', proto:'TCP', port:'6162 or 2500-3300', notes:'Required if log shipping servers not used and MS SQL server has direct connection.' },
+
+  // Log Shipping — Gateway Servers
+  { src:'Log shipping server', dst:'Gateway server', proto:'TCP', port:'6162 or 2500-3300', notes:'2500-3300 for failover.' },
+
+  // Log Shipping — Hypervisors
+  { src:'Log shipping server (backup server)', dst:'Hyper-V host', proto:'TCP', port:'6162 or 2500-3300', notes:'Required only if transferring over PowerShell Direct.' },
+  { src:'Log shipping server', dst:'ESXi host', proto:'TCP', port:'443', notes:'—' },
+
+  // CDP — CDP Proxies
+  { src:'ESXi host (source)', dst:'CDP proxy (source)', proto:'TCP', port:'33032', notes:'Regular CDP.' },
+  { src:'Source workload', dst:'CDP proxy (source)', proto:'TCP', port:'33032', notes:'Universal CDP.' },
+  { src:'CDP proxy (source)', dst:'CDP proxy (target)', proto:'TCP', port:'33033', notes:'—' },
+  { src:'Backup Server', dst:'CDP proxy (source and target)', proto:'TCP', port:'6182', notes:'—' },
+
+  // CDP — Virtualization Servers
+  { src:'CDP proxy (source and target)', dst:'vCenter Server', proto:'TCP', port:'443', notes:'Initial sync and restore. Port customizable in vCenter settings.' },
+  { src:'Backup Server', dst:'vCenter Server', proto:'TCP', port:'443', notes:'—' },
+  { src:'ESXi host (source)', dst:'ESXi host (source)', proto:'TCP', port:'33036', notes:'VMware CDP. Communication between CDP components over HTTPS without HTTP Reverse Proxy.' },
+  { src:'CDP proxy (source and target)', dst:'ESXi host', proto:'TCP', port:'902', notes:'Initial sync and restore.' },
+  { src:'ESXi host (target)', dst:'ESXi host (target)', proto:'TCP', port:'33036', notes:'Communication between CDP components over HTTPS without HTTP Reverse Proxy.' },
+  { src:'Backup Server', dst:'ESXi host', proto:'TCP', port:'443', notes:'—' },
+  { src:'Backup Server', dst:'ESXi host', proto:'TCP', port:'33035', notes:'—' },
+  { src:'CDP proxy (target)', dst:'ESXi host (target)', proto:'TCP', port:'33032', notes:'—' },
+
+  // CDP — Source Workloads
+  { src:'Backup Server', dst:'Source workload', proto:'TCP', port:'33050', notes:'[Universal CDP] Port for Veeam CDP Coordinator Service and Agent Service over HTTPS.' },
+
+  // CDP — Backup Server
+  { src:'CDP proxy (source and target) / ESXi host / vCenter Server', dst:'Backup Server', proto:'TCP', port:'33034', notes:'—' },
+  { src:'vCenter Server / ESXi host', dst:'Backup Server', proto:'TCP', port:'33035', notes:'—' },
+
+  // Guest OS File Recovery — Helper Appliances
+  { src:'Backup server / Mount server', dst:'Helper appliance', proto:'TCP', port:'22', notes:'—' },
+  { src:'Backup server / Mount server', dst:'Helper appliance', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+  { src:'VM guest OS (Linux/Unix)', dst:'Helper appliance', proto:'TCP', port:'21', notes:'Required if FTP server enabled.' },
+
+  // Guest OS File Recovery — Helper Hosts
+  { src:'Backup server / Mount server', dst:'Helper host', proto:'TCP', port:'22', notes:'—' },
+  { src:'Backup server / Mount server', dst:'Helper host', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+
+  // Guest OS File Recovery — Guest OS
+  { src:'Helper appliance / Helper host', dst:'VM guest OS (Linux/Unix)', proto:'TCP', port:'2500-3300', notes:'—' },
+  { src:'Helper appliance', dst:'VM guest OS (Linux/Unix)', proto:'TCP', port:'20', notes:'Required if FTP server enabled.' },
+  { src:'Backup Server', dst:'VM guest OS (Linux/Unix)', proto:'TCP', port:'22', notes:'—' },
+  { src:'Mount server', dst:'VM guest OS (Microsoft Windows)', proto:'TCP', port:'445, 135', notes:'—' },
+  { src:'Mount server', dst:'VM guest OS (Microsoft Windows)', proto:'TCP', port:'6160, 11731', notes:'11731 for failover if 6160 unavailable.' },
+  { src:'Mount server', dst:'VM guest OS (Microsoft Windows)', proto:'TCP', port:'6162', notes:'File-level restore.' },
+  { src:'Backup Server', dst:'VM guest OS', proto:'TCP', port:'2500-3300', notes:'—' },
+
+  // Guest OS File Recovery — Backup Repositories
+  { src:'Mount server / Helper appliance / Helper host', dst:'Backup repository', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+
+  // Guest OS File Recovery — Virtualization Servers
+  { src:'Mount server', dst:'vCenter server', proto:'TCP', port:'443', notes:'—' },
+  { src:'Mount server', dst:'ESXi host', proto:'TCP', port:'443', notes:'—' },
+  { src:'Helper appliance / Helper host', dst:'ESXi host', proto:'TCP', port:'443', notes:'Required if restore performed over vSphere Web Services. [vSphere < 6.5] Not required if vCenter used.' },
+
+  // Guest OS File Recovery — Veeam Update Servers
+  { src:'Mount server', dst:'Veeam Signature Update Server (avupdate.veeam.com)', proto:'TCP', port:'443', notes:'—' },
+
+  // SureBackup
+  { src:'Backup Server', dst:'Proxy appliance', proto:'TCP', port:'443', notes:'—' },
+  { src:'Internet-facing proxy server', dst:'VMs in the virtual lab', proto:'TCP', port:'8080', notes:'Allow VMs in virtual lab to access Internet.' },
+  { src:'Mount server running vPower NFS Service', dst:'ESXi server', proto:'TCP', port:'443', notes:'—' },
+  { src:'Backup repository / Gateway server working with backup repository', dst:'Hyper-V server', proto:'TCP', port:'6162, 2500-3300', notes:'2500-3300 for failover.' },
+
+  // SureReplica
+  { src:'Backup Server', dst:'Proxy appliance', proto:'TCP', port:'443', notes:'—' },
+];
+
+// Component definitions for the selection UI
+const COMPONENTS = [
+  { id:'backup_server',        label:'Backup Server',            roles:['Backup Server'] },
+  { id:'backup_proxy',         label:'Backup Proxy',             roles:['Backup Proxy'] },
+  { id:'gateway_server',       label:'Gateway Server',           roles:['Gateway Server'] },
+  { id:'repository',           label:'Backup Repository',        roles:['Backup Repository'] },
+  { id:'mount_server',         label:'Mount Server',             roles:['Mount Server'] },
+  { id:'veeam_infra_appliance',label:'Veeam Infrastructure Appliance', roles:['Veeam Infrastructure Appliance'] },
+  { id:'web_ui_pc',            label:'Web UI PC / Console',      roles:['Web UI and Host Management console PC','Veeam Backup & Replication console','Web UI PC'] },
+  { id:'remote_access_pc',     label:'Remote Access PC',         roles:['Remote access PC'] },
+  { id:'rest_client',          label:'REST Client',              roles:['REST client'] },
+  { id:'vcenter',              label:'vCenter Server',           roles:['vCenter Server'] },
+  { id:'esxi',                 label:'ESXi Server',              roles:['ESXi server'] },
+  { id:'hyper_v',              label:'Hyper-V Server',           roles:['Hyper-V server'] },
+  { id:'scvmm',                label:'SCVMM',                    roles:['SCVMM'] },
+  { id:'vm_guest_os',          label:'VM Guest OS (protected workloads)', roles:['VM Guest OS','VM guest OS'] },
+  { id:'guest_interaction_proxy', label:'Guest Interaction Proxy', roles:['Guest Interaction Proxy','Guest interaction proxy'] },
+  { id:'log_shipping_server',  label:'Log Shipping Server',      roles:['Log shipping server'] },
+  { id:'wan_accelerator',      label:'WAN Accelerator',          roles:['WAN accelerator'] },
+  { id:'cdp_proxy',            label:'CDP Proxy',                roles:['CDP proxy'] },
+  { id:'source_workload',      label:'Source Workload (CDP)',    roles:['Source workload'] },
+  { id:'tape_server',          label:'Tape Server',              roles:['Tape server'] },
+  { id:'helper_appliance',     label:'Helper Appliance',         roles:['Helper appliance'] },
+  { id:'helper_host',          label:'Helper Host',              roles:['Helper host'] },
+  { id:'proxy_appliance',      label:'Proxy Appliance (SureBackup/SureReplica)', roles:['Proxy appliance'] },
+  { id:'nfs_share',            label:'NFS Share',                roles:['NFS share'] },
+  { id:'smb_share',            label:'SMB/CIFS Share',           roles:['SMB share'] },
+  { id:'file_server',          label:'File Server (Win/Linux)',  roles:['File server'] },
+  { id:'nas_filer',            label:'NAS Filer (NetApp/Isilon/Nutanix)', roles:['NAS filer'] },
+  { id:'cache_repository',     label:'Cache Repository',         roles:['Cache repository'] },
+  { id:'dedup_appliance',      label:'Deduplicating Appliance (ExaGrid/DXi/etc.)', roles:['Deduplicating appliance'] },
+  { id:'dd_data_domain',       label:'Dell Data Domain',         roles:['Dell Data Domain'] },
+  { id:'hpe_storeonce',        label:'HPE StoreOnce',            roles:['HPE StoreOnce'] },
+  { id:'storage_system',       label:'Storage System (generic)', roles:['Storage system'] },
+  { id:'object_storage',       label:'Object Storage (S3/Azure/GCP)', roles:['Smart Object Storage API','Amazon S3 object storage','S3 compatible object storage','Microsoft Azure object storage','IBM Cloud object storage'] },
+  { id:'veeam_one',            label:'Veeam ONE Server/Web Services', roles:['Veeam ONE Server','Veeam ONE Web Services Server'] },
+  { id:'smtp_server',          label:'SMTP Server',              roles:['SMTP server'] },
+  { id:'dns_server',           label:'DNS Server',               roles:['DNS server'] },
+  { id:'ntp_server',           label:'NTP/NTS Server',           roles:['NTP server','NTS server'] },
+  { id:'ad_dc',                label:'Active Directory Domain Controller', roles:['Active Directory Domain Controllers'] },
+  { id:'postgresql_db',        label:'PostgreSQL Config DB',     roles:['PostgreSQL configuration database'] },
+  { id:'mssql_db',             label:'Microsoft SQL Server (config DB)', roles:['Microsoft SQL Server hosting the Veeam Backup & Replication configuration database'] },
+  { id:'kmip_server',          label:'KMIP Server',              roles:['Key Management System (KMIP) server'] },
+  { id:'syslog_server',        label:'Syslog Server',            roles:['Syslog server'] },
+  { id:'ndmp_server',          label:'NDMP Server',              roles:['NDMP server'] },
+  { id:'veeam_update_repo',    label:'Veeam Update Repository', roles:['Veeam Update Repository'] },
+  { id:'veeam_update_server',  label:'Veeam Update Server',     roles:['Veeam Update Server'] },
+  { id:'veeam_update_notify',  label:'Veeam Update Notification Server', roles:['Veeam Update Notification Server'] },
+  { id:'veeam_ai_assistant',   label:'Veeam AI Assistant',       roles:['Veeam AI Assistant'] },
+  { id:'veeam_data_cloud_vault', label:'Veeam Data Cloud Vault', roles:['Veeam Data Cloud Vault'] },
+  { id:'microsoft_graph',      label:'Microsoft Graph API',     roles:['Microsoft Graph REST API'] },
+  { id:'gmail_api',            label:'Gmail REST API',           roles:['Gmail REST API'] },
+  { id:'CRL_distribution',     label:'CRL Distribution Points', roles:['Certificate Revocation Lists','Veeam Update CRL distribution points','Amazon S3 CRL distribution points','Google Cloud CRL distribution points','Microsoft Azure CRL distribution points','Veeam Data Cloud Vault CRL distribution points'] },
+];
+
+// ── State ───────────────────────────────────────────────────────────────
+let selectedComponents = new Set();
+let currentRules = [];
+let sourceFqdn = '';
+let destFqdn = '';
+
+// ── DOM refs ─────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const sourceInput   = $('sourceFqdn');
+const destInput     = $('destFqdn');
+const checkboxGrid  = $('componentCheckboxes');
+const generateBtn   = $('generateBtn');
+const exportBtn     = $('exportCsvBtn');
+const clearBtn      = $('clearBtn');
+const ruleCount     = $('ruleCount');
+const ruleCount2    = $('ruleCount2');
+const tableWrap     = $('rulesTableWrap');
+const tableBody     = $('rulesTableBody');
+const toast         = $('toast');
+
+// ── Init checkboxes ─────────────────────────────────────────────────────
+function initCheckboxes() {
+  checkboxGrid.innerHTML = '';
+  COMPONENTS.forEach(c => {
+    const label = document.createElement('label');
+    label.className = 'checkbox-label';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.value = c.id;
+    input.dataset.roles = c.roles.join('|');
+    input.addEventListener('change', () => {
+      if (input.checked) selectedComponents.add(c.id);
+      else selectedComponents.delete(c.id);
+    });
+    label.appendChild(input);
+    label.appendChild(document.createTextNode(c.label));
+    checkboxGrid.appendChild(label);
+  });
+}
+initCheckboxes();
+
+// ── FQDN inputs ─────────────────────────────────────────────────────────
+sourceInput.addEventListener('input', () => { sourceFqdn = sourceInput.value.trim(); });
+destInput.addEventListener('input', () => { destFqdn = destInput.value.trim(); });
+
+// ── Generate rules ──────────────────────────────────────────────────────
+function generateRules() {
+  // Collect all roles for selected components
+  const selectedRoles = new Set();
+  selectedComponents.forEach(id => {
+    const comp = COMPONENTS.find(c => c.id === id);
+    if (comp) comp.roles.forEach(r => selectedRoles.add(r));
+  });
+
+  if (selectedRoles.size === 0) {
+    showToast('Select at least one component.', 'error');
+    return;
+  }
+
+  currentRules = PORT_DB.filter(rule => {
+    // Match if the source role appears in the rule's source field,
+    // OR if any of the user's selected roles appear in the rule's source field.
+    // For practical use, we match when the rule's "source" (the "From" column)
+    // mentions a role the user has selected OR the rule's "destination" (the "To" column)
+    // mentions a role the user has selected.
+    const srcMatch = matchesRoles(rule.src, selectedRoles);
+    const dstMatch = matchesRoles(rule.dst, selectedRoles);
+    // Include rule if it involves any selected component on either side
+    return srcMatch || dstMatch;
+  });
+
+  renderRules();
+}
+
+function matchesRoles(ruleText, selectedRoles) {
+  if (!ruleText) return false;
+  for (const role of selectedRoles) {
+    // Check for role name appearing as a distinct word/group in the rule text
+    // The rule text uses role names like "Backup Server", "Backup Proxy", etc.
+    if (ruleText.includes(role)) return true;
+    // Also check for the singular/plural or sub-role variants
+    // e.g. "Backup repository" should match "repository" component
+  }
+  // Broader match: check if any selected component's primary role keyword appears
+  for (const role of selectedRoles) {
+    const keywords = role.split(' ').filter(k => k.length > 2);
+    for (const kw of keywords) {
+      if (ruleText.toLowerCase().includes(kw.toLowerCase())) return true;
+    }
+  }
+  return false;
+}
+
+function renderRules() {
+  if (currentRules.length === 0) {
+    tableWrap.style.display = 'none';
+    ruleCount.textContent = 'No rules generated yet';
+    return;
+  }
+
+  tableWrap.style.display = 'block';
+  ruleCount.textContent = `${currentRules.length} rule${currentRules.length !== 1 ? 's' : ''} generated`;
+  ruleCount2.textContent = `${currentRules.length} rule${currentRules.length !== 1 ? 's' : ''}`;
+
+  let html = '<table><thead><tr>' +
+    '<th>#</th>' +
+    '<th>From (Source)</th>' +
+    '<th>To (Destination)</th>' +
+    '<th>Protocol</th>' +
+    '<th>Port(s)</th>' +
+    '<th>Notes / Context</th>' +
+    '</tr></thead><tbody>';
+
+  currentRules.forEach((rule, i) => {
+    const srcDisplay = replaceFqdn(rule.src);
+    const dstDisplay = replaceFqdn(rule.dst);
+    const protoDisplay = rule.proto;
+    const portDisplay = rule.port;
+    const notesDisplay = rule.notes || '—';
+
+    html += '<tr>' +
+      `<td style="color:var(--muted);font-size:0.72rem">${i + 1}</td>` +
+      `<td class="source-val"><div class="fqdn-val">${escHtml(srcDisplay)}</div></td>` +
+      `<td class="dest-val"><div class="fqdn-val">${escHtml(dstDisplay)}</div></td>` +
+      `<td class="proto-val">${escHtml(protoDisplay)}</td>` +
+      `<td class="port-val">${escHtml(portDisplay)}</td>` +
+      `<td class="notes-val">${escHtml(notesDisplay)}</td>` +
+      '</tr>';
+  });
+
+  html += '</tbody></table>';
+  tableBody.innerHTML = html;
+}
+
+function replaceFqdn(text) {
+  if (!sourceFqdn && !destFqdn) return text;
+  let result = text;
+
+  // Replace "Backup server", "Backup Server", etc. with source FQDN
+  // when it appears as the source entity in context
+  // We do a smart replacement: replace the first entity-like term with source,
+  // and destination-like terms with dest.
+  // Strategy: replace known role names with FQDN placeholders.
+  // For simplicity: we replace ALL role references with their FQDN if set.
+  // A more sophisticated version would track direction, but for a firewall list
+  // the user will see both sides populated with their FQDNs.
+
+  if (sourceFqdn) {
+    // Replace source-role mentions
+    const sourceRolePatterns = [
+      'Backup server', 'Backup Server',
+      'Backup proxy', 'Backup Proxy',
+      'Veeam Backup & Replication console',
+      'Web UI and Host Management console PC',
+      'Web UI PC',
+      'Remote access PC',
+      'REST client',
+      'Mount server',
+      'Veeam Infrastructure Appliance',
+      'Veeam Software Appliance',
+      'Backup repository',
+      'Gateway server',
+      'Guest interaction proxy',
+      'Guest Interaction Proxy',
+      'Log shipping server',
+      'WAN accelerator',
+      'CDP proxy',
+      'Tape server',
+      'Helper appliance',
+      'Helper host',
+      'Proxy appliance',
+      'File server',
+      'Backup proxy or Tape server',
+      'File server (Windows or Linux)',
+      'File server (Windows or Linux),  \nBackup proxy,',
+      'Backup server (primary or standby)',
+      'Source extent',
+      'Old cache repository',
+      'Source backup repository',
+      'Backup server (Veeam Software Appliance)',
+      'Backup server (Veeam Software Appliance),',
+    ];
+    for (const pat of sourceRolePatterns) {
+      // Only replace when it looks like the source entity (appears early in the text)
+      result = result.replace(new RegExp('^' + pat.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(,|<br>|$)'), sourceFqdn + '$1');
+    }
+  }
+
+  if (destFqdn) {
+    const destRolePatterns = [
+      'vCenter Server', 'vCenter server',
+      'ESXi server', 'ESXi host',
+      'Hyper-V server',
+      'SCVMM',
+      'PostgreSQL configuration database',
+      'Microsoft SQL Server',
+      'SMTP server',
+      'DNS server',
+      'NTP server', 'NTS server',
+      'Active Directory Domain Controllers',
+      'NFS backup repository',
+      'SMB (CIFS) backup repository',
+      'Dell Data Domain',
+      'HPE StoreOnce',
+      'Deduplicating appliance',
+      'Dell Unity XT',
+      'Dell PowerScale',
+      'HPE 3PAR StoreServ',
+      'HPE Alletra',
+      'Nutanix Files',
+      'Storage system',
+      'NFS share',
+      'SMB share',
+      'Amazon S3 object storage',
+      'Microsoft Azure object storage',
+      'Google Cloud',
+      'IBM Cloud object storage',
+      'S3 compatible object storage',
+      'Veeam ONE Server',
+      'Veeam ONE Web Services Server',
+      'VMware Cloud Director',
+      'VM guest OS',
+      'VM guest OS (Microsoft Windows)',
+      'VM guest OS (Linux)',
+      'VM guest OS (Linux/Unix)',
+      'VM guest OS (MS SQL)',
+      'VM guest OS (Oracle)',
+      'VM guest OS (PostgreSQL)',
+      'Log shipping server',
+      'Gateway server',
+      'Backup repository',
+      'Target extent',
+      'New cache repository',
+      'Archive repository',
+      'Primary or secondary backup repository',
+      'NDMP server',
+      'Cache repository',
+      'WAN accelerator (source and target)',
+      'WAN accelerator (target)',
+      'WAN accelerator (source)',
+      'CDP proxy (source and target)',
+      'CDP proxy (source)',
+      'CDP proxy (target)',
+      'vCenter Server',
+      'ESXi host (source)',
+      'ESXi host (target)',
+      'Source workload',
+      'Proxy appliance',
+      'Internet-facing proxy server',
+      'Hyper-V server',
+      'Microsoft SMB3 server (Hyper-V storage)',
+      'Veeam Update Repository',
+      'Veeam Update Server',
+      'Veeam Update Notification Server',
+      'Veeam AI Assistant',
+      'Veeam Data Cloud Vault',
+      'Microsoft Graph REST API',
+      'Gmail REST API',
+      'Certificate Revocation Lists',
+      'Key Management System (KMIP) server',
+      'Syslog server',
+      'Veeam Signature Update Server',
+      'Veeam Update CRL distribution points',
+      'Veeam Update Server CRL distribution points',
+      'Amazon S3 CRL distribution points',
+      'Google Cloud CRL distribution points',
+      'Microsoft Azure CRL distribution points',
+      'Veeam Data Cloud Vault CRL distribution points',
+      'Amazon CRL distribution points',
+    ];
+    for (const pat of destRolePatterns) {
+      result = result.replace(new RegExp('\\b' + pat.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b'), destFqdn);
+    }
+  }
+
+  return result;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Export CSV ──────────────────────────────────────────────────────────
+function exportCsv() {
+  if (currentRules.length === 0) {
+    showToast('Generate rules first.', 'error');
+    return;
+  }
+
+  // CSV header
+  const rows = [
+    ['Rule #','Source (From)','Destination (To)','Protocol','Port(s)','Notes / Context']
+  ];
+
+  currentRules.forEach((rule, i) => {
+    rows.push([
+      String(i + 1),
+      replaceFqdn(rule.src),
+      replaceFqdn(rule.dst),
+      rule.proto,
+      rule.port,
+      rule.notes || ''
+    ]);
+  });
+
+  const csvContent = rows.map(row =>
+    row.map(cell => {
+      const escaped = String(cell).replace(/"/g, '""');
+      if (escaped.includes(',') || escaped.includes('"') || escaped.includes('\n')) {
+        return '"' + escaped + '"';
+      }
+      return escaped;
+    }).join(',')
+  ).join('\r\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `veeam_firewall_rules_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showToast(`Exported ${currentRules.length} rules to CSV.`, 'success');
+}
+
+// ── Clear ───────────────────────────────────────────────────────────────
+function clearAll() {
+  sourceInput.value = '';
+  destInput.value = '';
+  sourceFqdn = '';
+  destFqdn = '';
+  selectedComponents.clear();
+  document.querySelectorAll('#componentCheckboxes input[type="checkbox"]').forEach(cb => {
+    cb.checked = false;
+  });
+  currentRules = [];
+  tableWrap.style.display = 'none';
+  ruleCount.textContent = 'No rules generated yet';
+  showToast('Cleared.', 'success');
+}
+
+// ── Toast ───────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, type) {
+  toast.textContent = msg;
+  toast.className = 'toast show ' + (type || '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toast.className = 'toast'; }, 2500);
+}
+
+// ── Events ──────────────────────────────────────────────────────────────
+generateBtn.addEventListener('click', generateRules);
+exportBtn.addEventListener('click', exportCsv);
+clearBtn.addEventListener('click', clearAll);
+
+// Allow Enter key in FQDN fields to trigger generation
+[sourceInput, destInput].forEach(inp => {
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') generateRules();
+  });
+});
+</script>
+</body>
+</html>
