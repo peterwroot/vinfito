@@ -312,6 +312,10 @@
       <p style="margin-top:10px;font-size:0.75rem;color:var(--muted)">
         Enter one or more FQDNs or IP addresses for every selected component. Separate multiple addresses with commas, semicolons, or new lines.
       </p>
+      <label class="same-endpoint-toggle" style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:0.8rem;cursor:pointer">
+        <input type="checkbox" id="excludeSameEndpoints">
+        Exclude rules where the source and destination address are the same
+      </label>
     </div>
   </div>
 
@@ -833,6 +837,7 @@ const state = { selected: new Set(), addresses: {}, rules: [] };
 const $ = id => document.getElementById(id);
 const checkboxGrid = $('componentCheckboxes');
 const addressesPanel = $('componentAddresses');
+const excludeSameEndpoints = $('excludeSameEndpoints');
 const tableWrap = $('rulesTableWrap');
 const tableBody = $('rulesTableBody');
 const ruleCount = $('ruleCount');
@@ -882,7 +887,8 @@ function renderAddressFields() {
 function generateRules() {
   try {
     state.rules = buildRules({ rules: PORT_DB, components: COMPONENTS,
-      selectedIds: state.selected, addresses: state.addresses });
+      selectedIds: state.selected, addresses: state.addresses,
+      excludeSameEndpoints: excludeSameEndpoints.checked });
     renderRules();
     if (!state.rules.length) showToast('No documented rules connect the selected components.', 'error');
   } catch (error) {
@@ -923,6 +929,7 @@ function exportCsv() {
 function clearAll() {
   state.selected.clear(); state.addresses = {}; state.rules = [];
   checkboxGrid.querySelectorAll('input').forEach(input => { input.checked = false; });
+  excludeSameEndpoints.checked = false;
   renderAddressFields(); renderRules();
 }
 function csvCell(value) { const text = String(value ?? ''); return `"${text.replace(/"/g, '""')}"`; }

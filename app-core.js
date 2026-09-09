@@ -44,7 +44,7 @@
       .map(c => c.id);
   }
 
-  function buildRules({ rules, components, selectedIds, addresses }) {
+  function buildRules({ rules, components, selectedIds, addresses, excludeSameEndpoints = false }) {
     const selected = selectedIds instanceof Set ? selectedIds : new Set(selectedIds || []);
     if (selected.size < 2) throw new Error('Select at least two components.');
 
@@ -69,6 +69,7 @@
         // A component may legitimately communicate with itself, but only retain it
         // when the official row names that same role on both sides.
         addressMap[sourceId].forEach(sourceAddress => addressMap[destinationId].forEach(destinationAddress => {
+          if (excludeSameEndpoints && sourceAddress.trim().toLowerCase() === destinationAddress.trim().toLowerCase()) return;
           const key = [sourceId, sourceAddress, destinationId, destinationAddress, rule.proto, rule.port, rule.notes].join('\u001f');
           if (seen.has(key)) return;
           seen.add(key);

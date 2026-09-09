@@ -43,6 +43,15 @@ const generated = buildRules({
   },
 });
 assert.equal(generated.length, 2, 'multiple addresses expand to a Cartesian product');
+
+const sameEndpointRules = buildRules({
+  rules: [{ src: 'Backup Server', dst: 'Backup Proxy', proto: 'TCP', port: '443', notes: 'test' }],
+  components,
+  selectedIds: new Set(['backup_server', 'backup_proxy']),
+  addresses: { backup_server: 'shared.example.com', backup_proxy: 'SHARED.EXAMPLE.COM' },
+  excludeSameEndpoints: true,
+});
+assert.equal(sameEndpointRules.length, 0, 'toggle excludes identical source and destination addresses');
 assert.deepEqual(generated.map(r => [r.sourceAddress, r.destinationAddress]), [
   ['backup01.example.com', 'proxy01.example.com'],
   ['backup02.example.com', 'proxy01.example.com'],
