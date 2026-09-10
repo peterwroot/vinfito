@@ -2389,5 +2389,126 @@ const PORT_DB = [
     "port": "22",
     "notes": "[Optional] Used to connect to the helper appliance during file-level restore."
   }
+,
+
+  {
+    "src": "Veeam Agent computer",
+    "dst": "Veeam backup server",
+    "proto": "TCP",
+    "port": "10005",
+    "notes": "Port 10005 is the default port used by Veeam Agent for Microsoft Windows for communication with the Veeam backup server. Port 10005 is also used by Veeam Agent for direct connection to the Veeam backup server using a recovery token during bare metal restore.<br>Data between the Veeam Agent computer and backup repositories is transferred directly, bypassing Veeam backup servers."
+  },
+  {
+    "src": "Veeam Agent computer",
+    "dst": "Veeam backup server",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Default port used by Veeam Agent to obtain authentication tokens from the Veeam Backup Identity Service. This port can be changed in Veeam Backup & Replication."
+  },
+  {
+    "src": "Veeam backup server",
+    "dst": "Veeam Agent computer",
+    "proto": "TCP",
+    "port": "135,<br>445,<br>6160, <br>6162,<br>2500 to 3300,<br>3260",
+    "notes": "Ports used by Veeam Backup & Replication for file-level restore and disk publishing."
+  },
+  {
+    "src": "Veeam Agent computer",
+    "dst": "Veeam backup repository",
+    "proto": "TCP",
+    "port": "6162,<br>2500 to 3300",
+    "notes": "Default port used by Veeam Data Mover Service.<br>Note: The port range 2500 to 3300 is optional. Only if port 6162 is unavailable, Veeam Agent uses the port range 2500 to 3300 for failover."
+  },
+  {
+    "src": "Gateway server",
+    "dst": "Veeam backup repository",
+    "proto": "TCP<br>UDP",
+    "port": "137 to 139, <br>445",
+    "notes": "If an SMB (CIFS) share is used as a backup repository and a Microsoft Windows server is selected as a gateway server for this CIFS share, these ports must be opened on the gateway Microsoft Windows server.<br>Ports 137 to 139 are used by backup infrastructure components to communicate using NetBIOS."
+  },
+  {
+    "src": "Veeam Agent computer",
+    "dst": "Veeam backup repository",
+    "proto": "TCP",
+    "port": "6162,<br>2500 to 3300",
+    "notes": "Default port used by Veeam Data Mover Service.<br>Note: The port range 2500 to 3300 is optional. Only if port 6162 is unavailable, Veeam Agent uses the port range 2500 to 3300 for failover."
+  },
+  {
+    "src": "Veeam Agent computer",
+    "dst": "Cloud gateway",
+    "proto": "TCP",
+    "port": "6180",
+    "notes": "Default port on the cloud gateway used to transport Veeam Agent data to the Veeam Cloud Connect repository."
+  },
+  {
+    "src": "Certificate revocation lists",
+    "dst": "Veeam Agent computer",
+    "proto": "TCP",
+    "port": "80 or 443 (most popular)",
+    "notes": "Veeam Agent computer needs access to CRLs (Certificate Revocation Lists) of the CA (Certification Authority) who issued a certificate to the Veeam Cloud Connect service provider.<br>Generally, information about CRL locations can be found on the CA website."
+  },
+  {
+    "src": "Veeam Agent computer",
+    "dst": "Shared folder SMB (CIFS) share",
+    "proto": "TCP",
+    "port": "139,<br>445",
+    "notes": "Ports used as a transmission channel from the Veeam Agent computer to the target SMB (CIFS) share.<br>Ports 137-139 are used by backup infrastructure components to communicate using NetBIOS if you use NetBIOS in your infrastructure."
+  },
+  {
+    "src": "Veeam Agent computer",
+    "dst": "Shared folder SMB (CIFS) share",
+    "proto": "UDP",
+    "port": "137, <br>138",
+    "notes": "Ports used as a transmission channel from the Veeam Agent computer to the target SMB (CIFS) share.<br>Ports 137-139 are used by backup infrastructure components to communicate using NetBIOS if you use NetBIOS in your infrastructure."
+  },
+  {
+    "src": "Veeam Agent computer",
+    "dst": "SMTP server",
+    "proto": "TCP",
+    "port": "25",
+    "notes": "Default port used by the SMTP server."
+  },
+  {
+    "src": "Veeam Agent computer",
+    "dst": "SMTP server",
+    "proto": "TCP",
+    "port": "587",
+    "notes": "Port used by the SMTP server if SSL is enabled."
+  },
+  {
+    "src": "Veeam Agent computer",
+    "dst": "Gmail REST API (gmail.googleapis.com)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Port used for communication with Google Mail services."
+  },
+  {
+    "src": "Veeam Agent computer",
+    "dst": "Microsoft Graph REST API (graph.microsoft.com, login.microsoftonline.com)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Port used for communication with Microsoft Exchange Online organizations."
+  },
+  {
+    "src": "Veeam Agent computer",
+    "dst": "Active Directory Domain Controller",
+    "proto": "UDP",
+    "port": "135",
+    "notes": "Port 135 is used for connection with Microsoft Endpoint Mapper to find available network services."
+  },
+  {
+    "src": "Veeam Update Notification Server<br>(agents.butler.veeam.com)",
+    "dst": "Veeam Agent computer",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Default port used to download information about available updates from the Veeam Update Notification Server over the Internet."
+  },
+  {
+    "src": "Veeam Agent computer",
+    "dst": "Veeam Agent computer",
+    "proto": "TCP",
+    "port": "6183,<br>2500 to 3500",
+    "notes": "Ports used locally on the Veeam Agent computer for communication between Veeam Agent components and Veeam Agent for Microsoft Windows Service."
+  }
 
 ];

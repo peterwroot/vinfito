@@ -45,6 +45,7 @@ The rule data is based on the Veeam Backup & Replication v13 used-ports document
 
 - Core ports: <https://helpcenter.veeam.com/docs/vbr/userguide/used_ports.html?ver=13>
 - XenServer plugin ports: <https://helpcenter.veeam.com/docs/vbr/userguide/xen_used_ports.html?ver=13>
+- Veeam Agent for Microsoft Windows ports: <https://helpcenter.veeam.com/docs/agentforwindows/userguide/ports.html?ver=13>
 
 `ports-data.js` contains the documented `From`, `To`, `Protocol`, `Port`, and `Notes` values. Notes are retained from the documentation, including qualifiers such as `Optional`, version-specific conditions, HTML line breaks, and links represented in the source data.
 

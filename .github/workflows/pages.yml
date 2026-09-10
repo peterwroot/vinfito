@@ -2,7 +2,7 @@ name: Deploy GitHub Pages
 on:
   push:
     branches: [ main ]
-    paths: [ 'index.html', '.github/workflows/pages.yml' ]
+    paths: [ 'index.html', 'ports-data.js', 'README.md', '.github/workflows/pages.yml' ]
 
 permissions:
   contents: read
