@@ -1,0 +1,2307 @@
+// Veeam Backup & Replication v13 firewall rules.
+// Each row is copied from the Veeam used-ports documentation.
+const PORT_DB = [
+  {
+    "src": "Web UI and Host Management console PC,<br>Veeam Backup & Replication console,<br>Mount server,<br>Veeam Infrastructure Appliance",
+    "dst": "Backup server",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "Web UI and Host Management console PC",
+    "dst": "Backup server",
+    "proto": "TCP",
+    "port": "10443",
+    "notes": "Required by Veeam Software Appliances only."
+  },
+  {
+    "src": "Web UI PC",
+    "dst": "Backup server",
+    "proto": "TCP",
+    "port": "80",
+    "notes": "Optional. Redirects HTTP requests to HTTPS so the web UI can be opened without typing the https:// scheme explicitly.<br>You can disable redirecting and free this port for another software as described in [this Veeam KB article](https://www.veeam.com/kb4868)."
+  },
+  {
+    "src": "Remote access PC",
+    "dst": "Backup server",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "Optional. Required only for troubleshooting Veeam Software Appliances."
+  },
+  {
+    "src": "Remote access PC",
+    "dst": "Backup server",
+    "proto": "UDP, TCP",
+    "port": "3389",
+    "notes": "Optional. Required only for troubleshooting Windows-based backup server."
+  },
+  {
+    "src": "Veeam Backup & Replication console",
+    "dst": "Backup server",
+    "proto": "TCP",
+    "port": "9420",
+    "notes": "\\[For console version 12.3.2 P1 (build 12.3.2.4165)\\] Port used by the Veeam Backup & Replication console to communicate with the backup server for console automatic update."
+  },
+  {
+    "src": "Backup proxy,<br>Backup repository (Linux),<br>Backup repository (Microsoft Windows),<br>Gateway server,<br>Mount server",
+    "dst": "Backup server",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "REST client",
+    "dst": "Backup server",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "REST client",
+    "dst": "Backup server",
+    "proto": "TCP",
+    "port": "9419",
+    "notes": "Required for Swagger. Optional for REST API for backward compatibility as REST API listens on port 443 now."
+  },
+  {
+    "src": "Backup server (Veeam Software Appliance),<br>Veeam Infrastructure Appliance",
+    "dst": "Veeam Update Repository<br>(repository.veeam.com)",
+    "proto": "TCP",
+    "port": "443 or 80",
+    "notes": "Required by Veeam Software and Infrastructure Appliances only."
+  },
+  {
+    "src": "Backup server (Veeam Software Appliance),<br>Veeam Infrastructure Appliance",
+    "dst": "Veeam Update Repository (local mirror)<br>(<localmirrorrepository.domain>)",
+    "proto": "TCP",
+    "port": "443 or 80",
+    "notes": "Required by Veeam Software and Infrastructure Appliances only.<br>Consider that the address must be replaced with the actual URL of your mirror repository."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Veeam Update Server<br>(vbr.butler.veeam.com, autolk.veeam.com)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Required for license updates. Starting from version 13.1, also required by Windows-based backup server, Veeam Software Appliance and Veeam Infrastructure Appliance for update rollout."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Veeam Update Server CRL distribution points<br>(\\*.ss2.us, \\*.amazontrust.com)",
+    "proto": "TCP",
+    "port": "80",
+    "notes": "Certificate verification endpoints (CRL URLs and OCSP servers) are subject to change. You can find the actual list of addresses in the certificate details in the following fields:<br>- CRL Distribution Points<br>- Authority Information Access<br>Make sure that the backup server can reach these verification endpoints."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Veeam Update Notification Server<br>(dev.veeam.com, vbrad.butler.veeam.com, vbrce.butler.veeam.com)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server,<br>Veeam Backup & Replication console,<br>Web UI and Host Management console PC",
+    "dst": "Veeam AI Assistant <br>(rest-ai.veeam.com)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Veeam ONE Server",
+    "proto": "TCP",
+    "port": "2741, 2805",
+    "notes": "Required for Veeam ONE only."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Veeam ONE Web Services Server",
+    "proto": "TCP",
+    "port": "1239",
+    "notes": "Required for Veeam ONE only."
+  },
+  {
+    "src": "Backup server",
+    "dst": "PostgreSQL configuration database",
+    "proto": "TCP",
+    "port": "5432",
+    "notes": "Required for Microsoft Windows-based backup servers with an external configuration database."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Microsoft SQL Server hosting the Veeam Backup & Replication configuration database",
+    "proto": "TCP",
+    "port": "1433",
+    "notes": "Required for Microsoft Windows-based backup servers with an external SQL Server configuration database. Depending on your configuration, alternative ports may need to be open. For more information, see [Microsoft Docs](https://msdn.microsoft.com/en-us/library/cc646023(v=sql.120).aspx#BKMK_ssde)."
+  },
+  {
+    "src": "Backup server",
+    "dst": "SMTP server",
+    "proto": "TCP",
+    "port": "25",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "SMTP server",
+    "proto": "TCP",
+    "port": "587",
+    "notes": "Required if SSL is enabled."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Gmail REST API <br>(gmail.googleapis.com, accounts.google.com, gstatic.com)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Microsoft Graph REST API<br>(graph.microsoft.com, login.microsoftonline.com)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server,<br>Veeam Infrastructure Appliance",
+    "dst": "NTP server",
+    "proto": "UDP",
+    "port": "123",
+    "notes": "Required by Veeam Software and Infrastructure Appliances only."
+  },
+  {
+    "src": "Backup server, <br>Veeam Infrastructure Appliance",
+    "dst": "NTS server",
+    "proto": "UDP",
+    "port": "123",
+    "notes": "Required by Veeam Software and Infrastructure Appliances only."
+  },
+  {
+    "src": "Any backup infrastructure component",
+    "dst": "DNS server",
+    "proto": "UDP, TCP",
+    "port": "53",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Certificate Revocation Lists",
+    "proto": "TCP",
+    "port": "80 or 443",
+    "notes": "The specific CRL endpoint that must be connected to depends on the CA that issued the certificate.<br>You can find the actual list of addresses in the certificate details in the following fields:<br>- CRL Distribution Points<br>- Authority Information Access<br>Make sure that the backup server can reach these verification endpoints."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Key Management System (KMIP) server",
+    "proto": "TCP",
+    "port": "5696",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Syslog server",
+    "proto": "TCP, UDP",
+    "port": "514",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Syslog server",
+    "proto": "TCP",
+    "port": "6514",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server, <br>Veeam Infrastructure Appliance",
+    "dst": "Active Directory Domain Controllers",
+    "proto": "TCP",
+    "port": "636, 3268, 3269",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server, <br>Veeam Infrastructure Appliance",
+    "dst": "Active Directory Domain Controllers",
+    "proto": "UDP, TCP",
+    "port": "445, 139",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server, <br>Veeam Infrastructure Appliance",
+    "dst": "Active Directory Domain Controllers",
+    "proto": "UDP, TCP",
+    "port": "88",
+    "notes": "Required for Kerberos authentication when Veeam Software or Infrastructure Appliances are domain-joined."
+  },
+  {
+    "src": "Gateway server or <br>Backup proxy",
+    "dst": "Active Directory Domain Controllers",
+    "proto": "TCP",
+    "port": "389",
+    "notes": "—"
+  },
+  {
+    "src": "Gateway server or <br>Backup proxy",
+    "dst": "Active Directory Domain Controllers",
+    "proto": "TCP",
+    "port": "88",
+    "notes": "Required for Kerberos authentication when Veeam Software or Infrastructure Appliances are domain-joined."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Veeam Infrastructure Appliance",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "Web UI PC, <br>Host Management console PC",
+    "dst": "Veeam Infrastructure Appliance",
+    "proto": "TCP",
+    "port": "10443",
+    "notes": "—"
+  },
+  {
+    "src": "Remote access PC",
+    "dst": "Veeam Infrastructure Appliance",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "Optional. Required only for troubleshooting Veeam Infrastructure Appliances."
+  },
+  {
+    "src": "Backup server,<br>Backup proxy,<br>Backup repository,<br>Mount server,<br>Gateway server <br>(for on-premises backup repository in case of Veeam Data Cloud Vault)<br>On-premises backup repository",
+    "dst": "Backup proxy / Backup proxy (direct connection)",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "\\[For Linux backup proxy\\] You can specify a different port while adding Linux servers to the Veeam Backup & Replication infrastructure. You can specify a different port only if there is no previously installed Veeam Transport Service or Veeam Data Mover components on the Linux server.<br>The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Backup proxy (Microsoft Windows)",
+    "proto": "TCP",
+    "port": "445, 137, 139",
+    "notes": "These ports are not required if the [Veeam Deployment Kit](https://helpcenter.veeam.com/docs/vbr/userguide/deployment_kit.html) is installed on the backup infrastructure component.<br>Note: 137 and 139 are legacy ports. If your backup infrastructure components do not use SMB 1.0, they are not required."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Backup proxy (Microsoft Windows)",
+    "proto": "TCP",
+    "port": "6160",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Backup proxy (Linux)",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Backup proxy (Linux)",
+    "proto": "TCP",
+    "port": "6160",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server,<br>Backup proxy,<br>Hyper-V server/Off-host backup proxy,<br>On-premises backup repository, <br>Gateway server<br>(for on-premises backup repository in case of Veeam Data Cloud Vault)<br>VM Guest OS",
+    "dst": "Gateway server / Gateway server for Veeam Data Cloud Vault",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "\\[For Linux gateway server\\] You can specify a different port while adding Linux servers to the Veeam Backup & Replication infrastructure. You can specify a different port only if there is no previously installed Veeam Transport Service or Veeam Data Mover components on the Linux server.<br>The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Gateway server (Microsoft Windows)",
+    "proto": "TCP",
+    "port": "445, 137, 139",
+    "notes": "These ports are not required if the [Veeam Deployment Kit](https://helpcenter.veeam.com/docs/vbr/userguide/deployment_kit.html) is installed on the backup infrastructure component.<br>Note: 137 and 139 are legacy ports. If your backup infrastructure components do not use SMB 1.0, they are not required."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Gateway server (Microsoft Windows)",
+    "proto": "TCP",
+    "port": "6160",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Gateway server (Linux)",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Gateway server (Linux)",
+    "proto": "TCP",
+    "port": "6160",
+    "notes": "—"
+  },
+  {
+    "src": "Mount server running vPower NFS Service",
+    "dst": "Gateway server working with backup repository",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "Required for Instant Recovery, SureBackup, and Linux file-level recovery.<br>The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Mount server running vPower NFS Service",
+    "dst": "Backup repository",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "Required for Instant Recovery, SureBackup, and Linux file-level recovery.<br>The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Veeam Backup & Replication console,<br>Backup proxy,<br>Hyper-V server/Off-host backup proxy",
+    "dst": "Backup repository",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "\\[For Linux repository\\] You can specify a different port while adding Linux servers to the Veeam Backup & Replication infrastructure. You can specify a different port only if there is no previously installed Veeam Transport Service or Veeam Data Mover components on the Linux server.<br>The port range 2500-3300 is used for failover if the 6162 port is unavailable."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Backup repository",
+    "proto": "TCP",
+    "port": "6160",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Backup repository (Microsoft Windows)",
+    "proto": "TCP",
+    "port": "445, 137, 139",
+    "notes": "These ports are not required if the [Veeam Deployment Kit](https://helpcenter.veeam.com/docs/vbr/userguide/deployment_kit.html) is installed on the backup infrastructure component.<br>Note: 137 and 139 are legacy ports. If your backup infrastructure components do not use SMB 1.0, they are not required."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Backup repository (Linux)",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "—"
+  },
+  {
+    "src": "Source backup repository",
+    "dst": "Target backup repository",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "Required for backup copy jobs. <br>If the backup copy job utilizes WAN accelerators, make sure that [ports specific for WAN accelerators](https://helpcenter.veeam.com/docs/vbr/userguide/used_ports.html#wan) are opened."
+  },
+  {
+    "src": "Gateway server or<br>Backup proxy",
+    "dst": "NFS backup repository",
+    "proto": "TCP, UDP",
+    "port": "111, 2049",
+    "notes": "—"
+  },
+  {
+    "src": "Gateway server or<br>Backup proxy",
+    "dst": "NFS backup repository<br>(NFS v3)",
+    "proto": "TCP, UDP",
+    "port": "mountd\\_port, statd\\_port, lockd\\_port",
+    "notes": "These ports can be assigned statically."
+  },
+  {
+    "src": "Gateway server or<br>Backup proxy",
+    "dst": "SMB (CIFS) backup repository (Microsoft Windows)",
+    "proto": "TCP",
+    "port": "445",
+    "notes": "Port used as a transmission channel from the gateway server to the target SMB (CIFS) backup repository if a gateway server is specified explicitly in SMB (CIFS) backup repository settings."
+  },
+  {
+    "src": "Backup server,<br>Gateway server",
+    "dst": "Dell Data Domain",
+    "proto": "TCP",
+    "port": "111",
+    "notes": "Port used to assign a random port for the mountd service used by NFS and DDBOOST. Mountd service port can be statically assigned."
+  },
+  {
+    "src": "Backup server,<br>Gateway server",
+    "dst": "Dell Data Domain",
+    "proto": "TCP",
+    "port": "2049",
+    "notes": "Main port used by NFS. Can be modified using the ‘nfs set server-port’ command. Command requires SE mode."
+  },
+  {
+    "src": "Backup server,<br>Gateway server",
+    "dst": "Dell Data Domain",
+    "proto": "TCP",
+    "port": "2052",
+    "notes": "Main port used by NFS MOUNTD. Can be modified using the 'nfs set mountd-port' command in SE mode."
+  },
+  {
+    "src": "Backup server or <br>Gateway server",
+    "dst": "HPE StoreOnce",
+    "proto": "TCP",
+    "port": "9387",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server or <br>Gateway server",
+    "dst": "HPE StoreOnce",
+    "proto": "TCP",
+    "port": "9388",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Deduplicating appliance",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Deduplicating appliance",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300, 6160",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Backup server,<br>Backup proxy (direct connection)/<br>Gateway server/<br>Instant Recovery to Azure helper appliance",
+    "dst": "Veeam Data Cloud Vault <br>(<storage-account>.blob.core.windows.net, <storage-account>.blob.storage.azure.net,<br>vdc-vault-integration-prod.veeamdatacloud.com,<br>cloud.veeam.com )",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Consider that the <storage-account> part of the address must be replaced with the ID of your storage vault. You can find the storage vault ID in the Storage Vaults \\> Vault ID section in Veeam Data Cloud Vault. For more information, see the [Managing Storage Vaults](https://helpcenter.veeam.com/docs/vdc/userguide/vault_storage_vaults_edit.html#viewing-storage-vault-details) section in the Veeam Data Cloud User Guide."
+  },
+  {
+    "src": "Backup server,<br>Backup proxy (direct connection)/<br>Gateway server/<br>Instant Recovery to Azure helper appliance",
+    "dst": "Veeam Data Cloud Vault CRL distribution points",
+    "proto": "TCP",
+    "port": "80",
+    "notes": "Port used to verify the certificate status through the certificate verification endpoints (CRL URLs and OCSP servers).<br>These endpoints are subject to change. You can find the actual list of addresses in [this Microsoft article](https://learn.microsoft.com/en-us/azure/security/fundamentals/azure-CA-details?tabs=root-and-subordinate-cas-list#certificate-downloads-and-revocation-lists) or in the certificate details in the following fields:<br>- CRL Distribution Points<br>- Authority Information Access<br>Make sure that the backup server, or proxy, or gateway server, or helper appliance can reach these verification endpoints."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Microsoft Entra ID<br>(login.microsoftonline.com, login.windows.net)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Veeam Update Server<br>(vbr.butler.veeam.com, autolk.veeam.com)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Default port used to automatically update the license from the Veeam Update Server over HTTPS."
+  },
+  {
+    "src": "Backup server,<br>Backup proxy (direct connection)/<br>Gateway server/<br>Amazon EC2 helper appliance",
+    "dst": "Veeam Data Cloud Vault (AWS Edition)<br>(\\*.amazonaws.com)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "The \\*.amazonaws.com endpoint is used for the Global and Government regions.<br>All AWS service endpoints are specified in the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region)."
+  },
+  {
+    "src": "Backup server,<br>Backup proxy (direct connection)/<br>Gateway server/<br>Amazon EC2 helper appliance",
+    "dst": "Veeam Data Cloud Vault (AWS Edition)",
+    "proto": "TCP",
+    "port": "80",
+    "notes": "Port used to verify the certificate status through the certificate verification endpoints (CRL URLs and OCSP servers).<br>These endpoints are subject to change. You can find the actual list of addresses in [this Microsoft article](https://learn.microsoft.com/en-us/azure/security/fundamentals/azure-CA-details?tabs=root-and-subordinate-cas-list#certificate-downloads-and-revocation-lists) or in the certificate details in the following fields:<br>- CRL Distribution Points<br>- Authority Information Access<br>Make sure that the backup server, or proxy, or gateway server, or helper appliance can reach these verification endpoints."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Smart Object Storage API (SOSAPI) compatible S3 object storage",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "Backup proxy (direct connection)/<br>Gateway server or backup server/<br>Amazon EC2 helper appliance",
+    "dst": "Amazon S3 object storage<br>(\\*.amazonaws.com, \\*.amazonaws.com.cn)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "The endpoint used by the connection depends on the region:<br>- \\*.amazonaws.com is used for the Global and Government regions.<br>- \\*.amazonaws.com.cn is used for the China region.<br>All AWS service endpoints are specified in the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region)."
+  },
+  {
+    "src": "Backup proxy (direct connection)/<br>Gateway server or backup server/<br>Amazon EC2 helper appliance",
+    "dst": "Amazon S3 CRL distribution points<br>(\\*.amazontrust.com)",
+    "proto": "TCP",
+    "port": "80",
+    "notes": "Consider that certificate verification endpoints (CRL URLs and OCSP servers) are subject to change. You can find the actual list of addresses in the certificate details in the following fields:<br>- CRL Distribution Points<br>- Authority Information Access<br>Make sure that the proxy, or gateway server, or helper appliance can reach these verification endpoints."
+  },
+  {
+    "src": "Backup proxy (direct connection)/<br>Gateway server or backup server/<br>Amazon EC2 helper appliance",
+    "dst": "S3 compatible object storage",
+    "proto": "TCP",
+    "port": "Depends on device configuration",
+    "notes": "—"
+  },
+  {
+    "src": "Backup proxy (direct connection)/<br>Gateway server or backup server/<br>Instant Recovery to Azure helper appliance",
+    "dst": "Microsoft Azure object storage<br>(<storage-account>.blob.core.windows.net, <storage-account>.blob.storage.azure.net, <storage-account>.blob.core.chinacloudapi.cn, <storage-account>.blob.core.usgovcloudapi.net)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "The endpoints used by the connection depend on the region:<br>- <storage-account>.blob.core.windows.net is used for the Global region.<br>- <storage-account>.blob.storage.azure.net is used for the Global region.<br>- <storage-account>.blob.core.chinacloudapi.cn is used for the China region.<br>- <storage-account>.blob.core.usgovcloudapi.net is used for the Government region.<br>Consider that the <storage-account> part of the address must be replaced with your actual storage account URL that can be found in the Azure management portal."
+  },
+  {
+    "src": "Backup proxy (direct connection)/<br>Gateway server or backup server/<br>Instant Recovery to Azure helper appliance",
+    "dst": "Microsoft Azure CRL distribution points",
+    "proto": "TCP",
+    "port": "80",
+    "notes": "Port used to verify the certificate status through the certificate verification endpoints (CRL URLs and OCSP servers).<br>These endpoints are subject to change. You can find the actual list of addresses in [this Microsoft article](https://learn.microsoft.com/en-us/azure/security/fundamentals/azure-CA-details?tabs=root-and-subordinate-cas-list#certificate-downloads-and-revocation-lists) or in the certificate details in the following fields:<br>- CRL Distribution Points<br>- Authority Information Access<br>Make sure that the proxy, or gateway server, or helper appliance can reach these verification endpoints."
+  },
+  {
+    "src": "Backup proxy (direct connection)/<br>Gateway server or backup server/<br>Instant Recovery to Azure helper appliance",
+    "dst": "Google Cloud CRL distribution points<br>(storage.googleapis.com)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "All cloud endpoints are specified in [this Google article](https://cloud.google.com/storage/docs/request-endpoints)."
+  },
+  {
+    "src": "Backup proxy (direct connection)/<br>Gateway server or backup server/<br>Instant Recovery to Azure helper appliance",
+    "dst": "Google Cloud CRL distribution points<br>(ocsp.pki.goog, pki.goog, crl.pki.goog)",
+    "proto": "TCP",
+    "port": "80",
+    "notes": "Port used to verify the certificate status.<br>Consider that certificate verification endpoints (CRL URLs and OCSP servers) are subject to change. You can find the actual list of addresses in the certificate details in the following fields:<br>- CRL Distribution Points<br>- Authority Information Access<br>Make sure that the proxy, or gateway server, or helper appliance can reach these verification endpoints."
+  },
+  {
+    "src": "Backup proxy (direct connection)/<br>Gateway server or backup server/<br>Instant Recovery to Azure helper appliance",
+    "dst": "IBM Cloud object storage",
+    "proto": "TCP",
+    "port": "Depends on device configuration",
+    "notes": "—"
+  },
+  {
+    "src": "Source extent",
+    "dst": "Target extent",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Target extent",
+    "dst": "Source extent",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Gateway server/<br>Backup server/<br>Instant Recovery to Azure helper appliance",
+    "dst": "Amazon S3 object storage<br>(\\*.amazonaws.com, \\*.amazonaws.com.cn)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "The endpoint used by the connection depends on the region:<br>- \\*.amazonaws.com is used for the Global and Government regions.<br>- \\*.amazonaws.com.cn is used for the China region.<br>All AWS service endpoints are specified in the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region)."
+  },
+  {
+    "src": "Gateway server/<br>Backup server/<br>Instant Recovery to Azure helper appliance",
+    "dst": "Amazon S3 CRL distribution points<br>(\\*.amazontrust.com)",
+    "proto": "TCP",
+    "port": "80",
+    "notes": "Port used to verify certificate status.<br>Consider that certificate verification endpoints (CRL URLs and OCSP servers) are subject to change. You can find the actual list of addresses in the certificate details in the following fields:<br>- CRL Distribution Points<br>- Authority Information Access<br>Make sure that the proxy, or backup server, or helper appliance can reach these verification endpoints."
+  },
+  {
+    "src": "Gateway server/<br>Backup server/<br>Instant Recovery to Azure helper appliance",
+    "dst": "Microsoft Azure object storage<br>(<storage-account>.blob.core.windows.net, <storage-account>.blob.storage.azure.net, <storage-account>.blob.core.chinacloudapi.cn, <storage-account>.blob.core.usgovcloudapi.net)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "The endpoints used by the connection depend on the region:<br>- <storage-account>.blob.core.windows.net is used for the Global region.<br>- <storage-account>.blob.storage.azure.net is used for the Global region.<br>- <storage-account>.blob.core.chinacloudapi.cn is used for the China region.<br>- <storage-account>.blob.core.usgovcloudapi.net is used for the Government region.<br>Consider that the <storage-account> part of the address must be replaced with your actual storage account URL that can be found in the Azure management portal."
+  },
+  {
+    "src": "Gateway server/<br>Backup server/<br>Instant Recovery to Azure helper appliance",
+    "dst": "Microsoft Azure CRL distribution points",
+    "proto": "TCP",
+    "port": "80",
+    "notes": "Port used to verify the certificate status through the certificate verification endpoints (CRL URLs and OCSP servers).<br>These endpoints are subject to change. You can find the actual list of addresses in [this Microsoft article](https://learn.microsoft.com/en-us/azure/security/fundamentals/azure-CA-details?tabs=root-and-subordinate-cas-list#certificate-downloads-and-revocation-lists) or in the certificate details in the following fields:<br>- CRL Distribution Points<br>- Authority Information Access<br>Make sure that the proxy, or backup server, or helper appliance can reach these verification endpoints."
+  },
+  {
+    "src": "Gateway server/<br>Backup server/<br>Instant Recovery to Azure helper appliance",
+    "dst": "Google Cloud CRL distribution points<br>(storage.googleapis.com)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "All cloud endpoints are specified in [this Google article](https://cloud.google.com/storage/docs/request-endpoints)."
+  },
+  {
+    "src": "Gateway server/<br>Backup server/<br>Instant Recovery to Azure helper appliance",
+    "dst": "Google Cloud CRL distribution points<br>(ocsp.pki.goog, pki.goog, crl.pki.goog)",
+    "proto": "TCP",
+    "port": "80",
+    "notes": "Port used to verify the certificate status.<br>Consider that certificate verification endpoints (CRL URLs and OCSP servers) are subject to change. You can find the actual list of addresses in the certificate details in the following fields:<br>- CRL Distribution Points<br>- Authority Information Access<br>Make sure that the proxy, or backup server, or helper appliance can reach these verification endpoints."
+  },
+  {
+    "src": "Gateway server or <br>Backup server",
+    "dst": "Amazon EC2 helper appliance",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "If you use Amazon S3 Glacier object storage, the gateway server should have direct connection to AWS service endpoints. HTTP/HTTPS proxy servers are not supported.<br>If there is no gateway server selected, the backup server will be used as a gateway server."
+  },
+  {
+    "src": "Gateway server or <br>Backup server",
+    "dst": "Amazon EC2 helper appliance",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "—"
+  },
+  {
+    "src": "Gateway server or <br>Backup server",
+    "dst": "Microsoft Azure proxy appliance",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "If there is no gateway server selected, the backup server will be used as a gateway server."
+  },
+  {
+    "src": "Gateway server or <br>Backup server",
+    "dst": "Microsoft Azure proxy appliance",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "—"
+  },
+  {
+    "src": "Amazon EC2 helper appliance",
+    "dst": "Amazon S3 object storage<br>(\\*.amazonaws.com, \\*.amazonaws.com.cn)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "The endpoint used by the connection depends on the region:<br>- \\*.amazonaws.com is used for the Global and Government regions.<br>- \\*.amazonaws.com.cn is used for the China region.<br>All AWS service endpoints are specified in the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region)."
+  },
+  {
+    "src": "Amazon EC2 helper appliance",
+    "dst": "Amazon S3 CRL distribution points<br>(\\*.amazontrust.com)",
+    "proto": "TCP",
+    "port": "80",
+    "notes": "Port used to verify the certificate status.<br>Consider that certificate verification endpoints (CRL URLs and OCSP servers) are subject to change. You can find the actual list of addresses in the certificate details in the following fields:<br>- CRL Distribution Points<br>- Authority Information Access<br>Make sure that the helper appliance can reach these verification endpoints."
+  },
+  {
+    "src": "Microsoft Azure proxy appliance",
+    "dst": "Microsoft Azure object storage<br>(<storage-account>.blob.core.windows.net, <storage-account>.blob.storage.azure.net, <storage-account>.blob.core.chinacloudapi.cn, <storage-account>.blob.core.usgovcloudapi.net)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "The endpoints used by the connection depend on the region:<br>- <storage-account>.blob.core.windows.net is used for the Global region.<br>- <storage-account>.blob.storage.azure.net is used for the Global region.<br>- <storage-account>.blob.core.chinacloudapi.cn is used for the China region.<br>- <storage-account>.blob.core.usgovcloudapi.net is used for the Government region.<br>Consider that the <storage-account> part of the address must be replaced with your actual storage account URL that can be found in the Azure management portal."
+  },
+  {
+    "src": "Microsoft Azure proxy appliance",
+    "dst": "Microsoft Azure CRL distribution points",
+    "proto": "TCP",
+    "port": "80",
+    "notes": "Port used to verify the certificate status through the certificate verification endpoints (CRL URLs and OCSP servers).<br>These endpoints are subject to change. You can find the actual list of addresses in [this Microsoft article](https://learn.microsoft.com/en-us/azure/security/fundamentals/azure-CA-details?tabs=root-and-subordinate-cas-list#certificate-downloads-and-revocation-lists) or in the certificate details in the following fields:<br>- CRL Distribution Points<br>- Authority Information Access<br>Make sure that the proxy appliance can reach these verification endpoints."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Application Backup Repository",
+    "proto": "TCP",
+    "port": "6960",
+    "notes": "—"
+  },
+  {
+    "src": "Veeam Backup & Replication console",
+    "dst": "Mount server",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "Required for guest OS file-level restore. These ports are not required if the mount server is located on the same machine as the console.<br>The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Mount server",
+    "proto": "TCP",
+    "port": "445",
+    "notes": "Not required if the [Veeam Deployment Kit](https://helpcenter.veeam.com/docs/vbr/userguide/deployment_kit.html) is installed on the backup infrastructure component."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Mount server",
+    "proto": "TCP",
+    "port": "6160",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Mount server",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Mount server",
+    "proto": "TCP",
+    "port": "6170",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Mount server running vPower NFS Service",
+    "proto": "TCP",
+    "port": "6160",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Mount server running vPower NFS Service",
+    "proto": "TCP",
+    "port": "6161",
+    "notes": "—"
+  },
+  {
+    "src": "ESXi host",
+    "dst": "Mount server running vPower NFS Service",
+    "proto": "TCP<br>UDP",
+    "port": "111",
+    "notes": "—"
+  },
+  {
+    "src": "ESXi host",
+    "dst": "Mount server running vPower NFS Service",
+    "proto": "TCP<br>UDP",
+    "port": "1058+ or 1063+",
+    "notes": "Default mount port. The port depends on where the vPower NFS Service is located:<br>- 1058+: If the vPower NFS Service is located on the backup server.<br>- 1063+: If the vPower NFS Service is located on a separate Microsoft Windows machine.<br>If port 1058/1063 is occupied, the succeeding port numbers will be used."
+  },
+  {
+    "src": "ESXi host",
+    "dst": "Mount server running vPower NFS Service",
+    "proto": "TCP<br>UDP",
+    "port": "2049+",
+    "notes": "—"
+  },
+  {
+    "src": "Backup repository or <br>Gateway server working with backup repository",
+    "dst": "Mount server running vPower NFS Service",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "Required for Instant Recovery, SureBackup or Linux file-level recovery.<br>The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Dell Unity XT,<br>Unity storage system",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "Dell Unity XT,<br>Unity storage system",
+    "proto": "TCP",
+    "port": "3260",
+    "notes": "Required for iSCSI connectivity."
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "Dell Unity XT,<br>Unity storage system",
+    "proto": "TCP, UDP",
+    "port": "111, 2049",
+    "notes": "Required for NFS connectivity."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Dell PowerScale storage system",
+    "proto": "TCP",
+    "port": "8080",
+    "notes": "—"
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "Dell PowerScale storage system",
+    "proto": "TCP, UDP",
+    "port": "111, 2049",
+    "notes": "Required for NFS connectivity."
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "Dell PowerScale storage system",
+    "proto": "TCP",
+    "port": "445",
+    "notes": "Required for SMB connectivity."
+  },
+  {
+    "src": "Backup server",
+    "dst": "HPE 3PAR StoreServ storage system",
+    "proto": "TCP",
+    "port": "8008",
+    "notes": "Required for communication over HTTP."
+  },
+  {
+    "src": "Backup server",
+    "dst": "HPE 3PAR StoreServ storage system",
+    "proto": "TCP",
+    "port": "8080",
+    "notes": "Required for communication over HTTPS."
+  },
+  {
+    "src": "Backup server",
+    "dst": "HPE 3PAR StoreServ storage system",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "Required for communication over SSH."
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "HPE 3PAR StoreServ storage system",
+    "proto": "TCP",
+    "port": "3260",
+    "notes": "Required for iSCSI connectivity."
+  },
+  {
+    "src": "Backup server",
+    "dst": "HPE Alletra Storage MP B10000, <br>Alletra 9000,<br>Primera storage system",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Required for communication over HTTPS."
+  },
+  {
+    "src": "Backup server",
+    "dst": "HPE Alletra Storage MP B10000, <br>Alletra 9000,<br>Primera storage system",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "Required for communication over SSH."
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "HPE Alletra Storage MP B10000,<br>Alletra 9000,<br>Primera storage system",
+    "proto": "TCP",
+    "port": "3260",
+    "notes": "Required for iSCSI connectivity."
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "HPE Alletra Storage MP B10000,<br>Alletra 9000",
+    "proto": "TCP",
+    "port": "4420, 8009",
+    "notes": "Required for NVMe-oF connectivity."
+  },
+  {
+    "src": "Backup server",
+    "dst": "HPE Alletra 5000,<br>Alletra 6000/Nimble storage system",
+    "proto": "TCP",
+    "port": "5392",
+    "notes": "—"
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "HPE Alletra 5000,<br>Alletra 6000/Nimble storage system",
+    "proto": "TCP",
+    "port": "3260",
+    "notes": "Required for iSCSI connectivity."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Storage system",
+    "proto": "TCP",
+    "port": "80",
+    "notes": "Required for communication over HTTP."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Storage system",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Required for communication over HTTPS."
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "Storage system",
+    "proto": "TCP, UDP",
+    "port": "111, 2049, 635",
+    "notes": "Required for NFS connectivity."
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "Storage system",
+    "proto": "TCP",
+    "port": "445",
+    "notes": "Required for built-in storage systems for SMB connectivity."
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "Storage system",
+    "proto": "TCP",
+    "port": "3260",
+    "notes": "Required for iSCSI connectivity."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Nutanix Files storage system",
+    "proto": "TCP",
+    "port": "9440",
+    "notes": "—"
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "Nutanix Files storage system",
+    "proto": "TCP, UDP",
+    "port": "111, 2049, 20048",
+    "notes": "Required for NFS connectivity."
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "Nutanix Files storage system",
+    "proto": "TCP",
+    "port": "445",
+    "notes": "Required for SMB connectivity."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Dell SC Series storage system",
+    "proto": "TCP",
+    "port": "3033",
+    "notes": "Required for communication over HTTPS."
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "Dell SC Series storage system",
+    "proto": "TCP",
+    "port": "3260",
+    "notes": "Required for iSCSI connectivity."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Dell PowerMax storage system",
+    "proto": "TCP",
+    "port": "8443",
+    "notes": "Required for communication over HTTPS."
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "Dell PowerMax storage system",
+    "proto": "TCP",
+    "port": "3260",
+    "notes": "Required for iSCSI connectivity."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Storage system",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "Required for communication over SSH."
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "Storage system",
+    "proto": "TCP, UDP",
+    "port": "111, 2049",
+    "notes": "Required for NFS connectivity."
+  },
+  {
+    "src": "Backup server<br>(primary or standby)",
+    "dst": "PostgreSQL configuration database",
+    "proto": "TCP",
+    "port": "5432",
+    "notes": "The connection should be opened from the primary backup server to its configuration database, and from the standby backup server to its configuration database."
+  },
+  {
+    "src": "Backup Server Cluster member",
+    "dst": "Backup Server Cluster member",
+    "proto": "TCP",
+    "port": "8008, 8500",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "vCenter Server",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "The backup server should have a direct connection to vCenter Server. HTTP/HTTPS proxy servers are not supported.<br>If you use VMware Cloud Director, make sure you open port 443 on underlying vCenter Servers."
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "vCenter Server",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "This port can be customized in vCenter settings."
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "ESXi server",
+    "proto": "TCP",
+    "port": "902",
+    "notes": "This port is not required for VMware Cloud on AWS."
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "ESXi server",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Not required if a vCenter connection or VMware Cloud on AWS is used."
+  },
+  {
+    "src": "Backup server",
+    "dst": "ESXi server",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "This port is not required for VMware Cloud on AWS."
+  },
+  {
+    "src": "Backup server",
+    "dst": "ESXi server",
+    "proto": "TCP",
+    "port": "902",
+    "notes": "This port is not required for VMware Cloud on AWS."
+  },
+  {
+    "src": "Backup server",
+    "dst": "VMware Cloud Director",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "The backup server should have a direct connection to VMware Cloud Director. HTTP/HTTPS proxy servers are not supported."
+  },
+  {
+    "src": "Backup server",
+    "dst": "SCVMM",
+    "proto": "TCP",
+    "port": "8732",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "SCVMM",
+    "proto": "TCP",
+    "port": "445, 137, 139",
+    "notes": "These ports are not required if the [Veeam Deployment Kit](https://helpcenter.veeam.com/docs/vbr/userguide/deployment_kit.html) is installed on the backup infrastructure component.<br>Note: 137 and 139 are legacy ports. If your backup infrastructure components do not use SMB 1.0, they are not required."
+  },
+  {
+    "src": "Backup server",
+    "dst": "SCVMM",
+    "proto": "TCP",
+    "port": "6160",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "SCVMM",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Hyper-V server",
+    "proto": "TCP",
+    "port": "445, 135, 137, 139",
+    "notes": "These ports are not required if the [Veeam Deployment Kit](https://helpcenter.veeam.com/docs/vbr/userguide/deployment_kit.html) is installed on the backup infrastructure component.<br>Note: 137 and 139 are legacy ports. If your backup infrastructure components do not use SMB 1.0, they are not required."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Hyper-V server",
+    "proto": "TCP",
+    "port": "6160",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Hyper-V server",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Hyper-V server",
+    "proto": "TCP",
+    "port": "6163",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Hyper-V server",
+    "proto": "TCP",
+    "port": "2179",
+    "notes": "Required for [Instant Recovery to Microsoft Hyper-V](https://helpcenter.veeam.com/docs/vbr/userguide/instant_recovery_to_hv.html) and [Recovery Verification for Microsoft Hyper-V](https://helpcenter.veeam.com/docs/vbr/userguide/recovery_verification_overview_hv.html)."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Hyper-V server",
+    "proto": "TCP",
+    "port": "49152 to 65535",
+    "notes": "If you use default Microsoft Windows firewall settings, you do not need to configure these dynamic RPC ports. During setup, Veeam Backup & Replication automatically creates a firewall rule for the runtime process. If you use firewall settings other than default ones or application-aware processing fails with the \"RPC function call failed\" error, you need to configure dynamic RPC ports. For more information on RPC dynamic port allocation, see [this Microsoft KB article](https://support.microsoft.com/kb/929851/en-us) and [this Microsoft KB article](https://support.microsoft.com/en-us/help/154596/how-to-configure-rpc-dynamic-port-allocation-to-work-with-firewalls)."
+  },
+  {
+    "src": "Microsoft Windows/Linux-based backup repository",
+    "dst": "Hyper-V server",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Hyper-V server/Off-host backup proxy",
+    "dst": "Hyper-V server",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Microsoft SMB3 server (Hyper-V storage)",
+    "proto": "TCP",
+    "port": "6160",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Microsoft SMB3 server (Hyper-V storage)",
+    "proto": "TCP",
+    "port": "6162, 2500-3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Microsoft SMB3 server (Hyper-V storage)",
+    "proto": "TCP",
+    "port": "6163",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Hyper-V server/Off-host backup proxy",
+    "proto": "TCP",
+    "port": "445, 135, 137, 139",
+    "notes": "These ports are not required if the [Veeam Deployment Kit](https://helpcenter.veeam.com/docs/vbr/userguide/deployment_kit.html) is installed on the backup infrastructure component.<br>Note: 137 and 139 are legacy ports. If your backup infrastructure components do not use SMB 1.0, they are not required."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Hyper-V server/Off-host backup proxy",
+    "proto": "TCP",
+    "port": "6160",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Hyper-V server/Off-host backup proxy",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Hyper-V server/Off-host backup proxy",
+    "proto": "TCP",
+    "port": "6163",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Hyper-V server/Off-host backup proxy",
+    "proto": "TCP",
+    "port": "49152 to 65535",
+    "notes": "If you use default Microsoft Windows firewall settings, you do not need to configure these dynamic RPC ports. During setup, Veeam Backup & Replication automatically creates a firewall rule for the runtime process. If you use firewall settings other than default ones or application-aware processing fails with the \"RPC function call failed\" error, you need to configure dynamic RPC ports. For more information on RPC dynamic port allocation, see [this Microsoft KB article](https://support.microsoft.com/kb/929851/en-us) and [this Microsoft KB article](https://support.microsoft.com/en-us/help/154596/how-to-configure-rpc-dynamic-port-allocation-to-work-with-firewalls)."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Off-host backup proxy",
+    "proto": "TCP",
+    "port": "6210",
+    "notes": "Required for VSS snapshot during SMB file share backup."
+  },
+  {
+    "src": "SCVMM",
+    "dst": "Backup server",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "Hyper-V server/Off-host backup proxy",
+    "dst": "Gateway server",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Backup server",
+    "dst": "File server (Windows or Linux)",
+    "proto": "TCP",
+    "port": "6160",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "File server (Windows or Linux)",
+    "proto": "TCP",
+    "port": "6210",
+    "notes": "Required by Microsoft Windows-based backup servers for VSS snapshot during SMB file share backup."
+  },
+  {
+    "src": "Backup server",
+    "dst": "File server (Windows or Linux)",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "—"
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "NAS filer (NetApp Data ONTAP or Lenovo ThinkSystem DM/DG Series storage system)",
+    "proto": "TCP, UDP",
+    "port": "111, 2049",
+    "notes": "Required for NFS."
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "NAS filer (NetApp Data ONTAP or Lenovo ThinkSystem DM/DG Series storage system)",
+    "proto": "TCP",
+    "port": "445",
+    "notes": "Required for SMB."
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "NAS filer (NetApp Data ONTAP or Lenovo ThinkSystem DM/DG Series storage system)",
+    "proto": "TCP, UDP",
+    "port": "635",
+    "notes": "—"
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "NAS filer (NetApp Data ONTAP or Lenovo ThinkSystem DM/DG Series storage system)",
+    "proto": "TCP",
+    "port": "80, 443",
+    "notes": "Required by NetApp SnapDiff when changed file tracking (CFT) is enabled."
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "NAS filer (Dell PowerScale (formerly Isilon) or Nutanix Files storage system)",
+    "proto": "TCP, UDP",
+    "port": "111, 2049",
+    "notes": "Required for NFS."
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "NAS filer (Dell PowerScale (formerly Isilon) or Nutanix Files storage system)",
+    "proto": "TCP",
+    "port": "445",
+    "notes": "Required for SMB connections."
+  },
+  {
+    "src": "Backup proxy",
+    "dst": "NAS filer (Dell PowerScale (formerly Isilon) or Nutanix Files storage system)",
+    "proto": "TCP",
+    "port": "20048",
+    "notes": "Required for NFS."
+  },
+  {
+    "src": "Cache repository",
+    "dst": "NAS filer (NetApp Data ONTAP)",
+    "proto": "TCP",
+    "port": "80, 443, 2049",
+    "notes": "Required by NetApp SnapDiff when changed file tracking (CFT) is enabled.<br>Port 2049 is only required if the cache repository is a Linux machine."
+  },
+  {
+    "src": "File server (Windows or Linux), <br>Backup proxy,<br>Tape server",
+    "dst": "NFS share",
+    "proto": "TCP, UDP",
+    "port": "111, 2049",
+    "notes": "Required for NFS."
+  },
+  {
+    "src": "File server (Windows or Linux),<br>Mount server,<br>Backup proxy,<br>Tape server",
+    "dst": "SMB share",
+    "proto": "TCP",
+    "port": "445",
+    "notes": "Required for SMB."
+  },
+  {
+    "src": "Mount server",
+    "dst": "SMB share",
+    "proto": "TCP",
+    "port": "137-139",
+    "notes": "Required for CIFS."
+  },
+  {
+    "src": "File server (Windows or Linux), <br>Backup proxy,<br>Tape server",
+    "dst": "Amazon S3 object storage<br>(\\*.amazonaws.com, \\*.amazonaws.com.cn)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Port used to communicate with Amazon S3 object storage.<br>The endpoint used by the connection depends on the region:<br>- \\*.amazonaws.com is used for the Global and Government regions.<br>- \\*.amazonaws.com.cn is used for the China region.<br>All AWS service endpoints are specified in the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region)."
+  },
+  {
+    "src": "File server (Windows or Linux), <br>Backup proxy,<br>Tape server",
+    "dst": "Amazon CRL distribution points<br>(\\*.amazontrust.com)",
+    "proto": "TCP",
+    "port": "80",
+    "notes": "Port used to verify certificate status.<br>Consider that certificate verification endpoints (CRL URLs and OCSP servers) are subject to change. You can find the actual list of addresses in the certificate details in the following fields:<br>- CRL Distribution Points<br>- Authority Information Access<br>Make sure that the file server, or backup proxy, or tape server can reach these verification endpoints."
+  },
+  {
+    "src": "File server (Windows or Linux), <br>Backup proxy,<br>Tape server",
+    "dst": "Microsoft Azure object storage<br>(<storage-account>.blob.core.windows.net, <storage-account>.blob.storage.azure.net, <storage-account>.blob.core.chinacloudapi.cn, <storage-account>.blob.core.usgovcloudapi.net)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "The endpoints used by the connection depend on the region:<br>- <storage-account>.blob.core.windows.net is used for the Global region.<br>- <storage-account>.blob.storage.azure.net is used for the Global region.<br>- <storage-account>.blob.core.chinacloudapi.cn is used for the China region.<br>- <storage-account>.blob.core.usgovcloudapi.net is used for the Government region.<br>Consider that the <storage-account> part of the address must be replaced with your actual storage account URL that can be found in the Azure management portal."
+  },
+  {
+    "src": "File server (Windows or Linux), <br>Backup proxy,<br>Tape server",
+    "dst": "Microsoft Azure CRL distribution points",
+    "proto": "TCP",
+    "port": "80",
+    "notes": "Port used to verify the certificate status through the certificate verification endpoints (CRL URLs and OCSP servers).<br>These endpoints are subject to change. You can find the actual list of addresses in [this Microsoft article](https://learn.microsoft.com/en-us/azure/security/fundamentals/azure-CA-details?tabs=root-and-subordinate-cas-list#certificate-downloads-and-revocation-lists) or in the certificate details in the following fields:<br>- CRL Distribution Points<br>- Authority Information Access<br>Make sure that the file server, or backup proxy, or tape server can reach these verification endpoints."
+  },
+  {
+    "src": "File server (Windows or Linux), <br>Backup proxy,<br>Tape server",
+    "dst": "S3 compatible object storage",
+    "proto": "TCP",
+    "port": "Depends on device configuration",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server,<br>File server (Windows or Linux), <br>Backup proxy",
+    "dst": "Cache repository",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Cache repository",
+    "proto": "TCP",
+    "port": "6160",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Cache repository (Linux)",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "—"
+  },
+  {
+    "src": "Old cache repository",
+    "dst": "New cache repository",
+    "proto": "TCP",
+    "port": "2500 to 3300",
+    "notes": "Required for metadata migration during cache repository change. For more information, see [Changing Cache Repository](https://helpcenter.veeam.com/docs/vbr/userguide/unstructured_data_backup_in_object_storage.html#change_cache_repo)."
+  },
+  {
+    "src": "New cache repository",
+    "dst": "Old cache repository",
+    "proto": "TCP",
+    "port": "2500 to 3300",
+    "notes": "Required for used for metadata migration during cache repository change. For more information, see [Changing Cache Repository](https://helpcenter.veeam.com/docs/vbr/userguide/unstructured_data_backup_in_object_storage.html#change_cache_repo)."
+  },
+  {
+    "src": "Primary backup repository",
+    "dst": "Archive repository",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Cache repository",
+    "dst": "Primary or secondary backup repository",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Gateway server",
+    "dst": "NDMP server",
+    "proto": "NDMP",
+    "port": "10000",
+    "notes": "The additional port range used for data transfer depends on your NDMP server configuration. For more information, contact your hardware vendor."
+  },
+  {
+    "src": "File server (Windows or Linux), <br>Backup proxy",
+    "dst": "Backup server",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Backup proxy",
+    "proto": "TCP",
+    "port": "6160",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Backup proxy",
+    "proto": "TCP",
+    "port": "6210",
+    "notes": "Required by Microsoft Windows-based backup servers for VSS snapshot during SMB file share backup."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Backup proxy",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Mount server",
+    "proto": "TCP",
+    "port": "443, 445, 6170",
+    "notes": "Required for Instant File Share Recovery."
+  },
+  {
+    "src": "Cache repository",
+    "dst": "Gateway server",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Backup proxy,<br>File server (Windows or Linux), <br>Backup proxy or <br>Tape server",
+    "dst": "Active Directory Domain Controllers",
+    "proto": "TCP",
+    "port": "389",
+    "notes": "—"
+  },
+  {
+    "src": "Backup proxy,<br>File server (Windows or Linux), <br>Backup proxy or <br>Tape server",
+    "dst": "Active Directory Domain Controllers",
+    "proto": "TCP",
+    "port": "88",
+    "notes": "Required for Kerberos authentication."
+  },
+  {
+    "src": "Tape server",
+    "dst": "Backup server",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Tape server",
+    "proto": "TCP",
+    "port": "6160",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Tape server",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Tape server",
+    "proto": "TCP",
+    "port": "6166",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Tape server (Windows)",
+    "proto": "TCP",
+    "port": "445, 137, 139",
+    "notes": "Ports used for deploying Veeam Backup & Replication components. These ports are not required if the [Veeam Deployment Kit](https://helpcenter.veeam.com/docs/vbr/userguide/deployment_kit.html) is installed on the backup infrastructure component.<br>Note: 137 and 139 are legacy ports. If your backup infrastructure components do not use SMB 1.0, they are not required."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Tape server (Linux)",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "—"
+  },
+  {
+    "src": "Tape server",
+    "dst": "Backup repository",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Tape server",
+    "dst": "Gateway server",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "—"
+  },
+  {
+    "src": "Tape server",
+    "dst": "NFS share",
+    "proto": "TCP, UDP",
+    "port": "111, 2049",
+    "notes": "—"
+  },
+  {
+    "src": "Tape server",
+    "dst": "SMB share",
+    "proto": "TCP",
+    "port": "445",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "WAN accelerator <br>(source and target)",
+    "proto": "TCP",
+    "port": "445, 137, 139",
+    "notes": "These ports are not required if the [Veeam Deployment Kit](https://helpcenter.veeam.com/docs/vbr/userguide/deployment_kit.html) is installed on the backup infrastructure component.<br>Note: 137 and 139 are legacy ports. If your backup infrastructure components do not use SMB 1.0, they are not required."
+  },
+  {
+    "src": "Backup server",
+    "dst": "WAN accelerator <br>(source and target)",
+    "proto": "TCP",
+    "port": "6160",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "WAN accelerator <br>(source and target)",
+    "proto": "TCP",
+    "port": "6162",
+    "notes": "Default port used by Veeam Transport Service (Veeam Data Mover Service if Veeam Backup & Replication is installed on the Microsoft Windows machine)."
+  },
+  {
+    "src": "Backup server",
+    "dst": "WAN accelerator <br>(source and target)",
+    "proto": "TCP",
+    "port": "6164",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "WAN accelerator <br>(target)",
+    "proto": "TCP",
+    "port": "6220",
+    "notes": "Required for traffic control (throttling) for tenants that use WAN accelerators.<br>This port is required only in the Veeam Cloud Connect infrastructure."
+  },
+  {
+    "src": "WAN accelerator (source and target)",
+    "dst": "WAN accelerator (source and target)",
+    "proto": "TCP",
+    "port": "6164",
+    "notes": "—"
+  },
+  {
+    "src": "WAN accelerator (source and target)",
+    "dst": "WAN accelerator (source and target)",
+    "proto": "TCP",
+    "port": "6165",
+    "notes": "This port must be open between sites where WAN accelerators are deployed."
+  },
+  {
+    "src": "WAN accelerator (target)",
+    "dst": "Backup repository (target)",
+    "proto": "TCP",
+    "port": "2500 to 3300",
+    "notes": "—"
+  },
+  {
+    "src": "WAN accelerator (source)",
+    "dst": "Backup repository (source)",
+    "proto": "TCP",
+    "port": "2500 to 3300",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Guest interaction proxy",
+    "proto": "TCP",
+    "port": "445, 135",
+    "notes": "Required for adding Windows machines to managed servers using local administrator credentials.<br>Kerberos domain account with administrator privileges should be used."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Guest interaction proxy",
+    "proto": "TCP",
+    "port": "6160",
+    "notes": "Required for adding both Windows and Linux machines to managed servers using a certificate-based authentication.<br>Deployment kit should be pre-installed on VMs."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Guest interaction proxy",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "Required for adding Linux machines to managed servers using SSH credentials."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Guest interaction proxy",
+    "proto": "TCP",
+    "port": "6190",
+    "notes": "—"
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "VM guest OS (Microsoft Windows)",
+    "proto": "TCP",
+    "port": "445, 135",
+    "notes": "NOT required in networkless mode over vSphere Web Services or PowerShell Direct."
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "VM guest OS (Microsoft Windows)",
+    "proto": "TCP",
+    "port": "6173",
+    "notes": "NOT required in networkless mode over vSphere Web Services or PowerShell Direct."
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "VM guest OS (Linux)",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "NOT required in networkless mode over vSphere Web Services or PowerShell Direct."
+  },
+  {
+    "src": "Backup server",
+    "dst": "VM guest OS (Linux)",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "VM guest OS (Linux)",
+    "proto": "TCP",
+    "port": "2500 to 3300",
+    "notes": "—"
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "VM guest OS (Linux)",
+    "proto": "TCP",
+    "port": "6160",
+    "notes": "—"
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "VM guest OS (Linux)",
+    "proto": "TCP",
+    "port": "6162",
+    "notes": "Required if it is used as a control channel instead of SSH."
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "VM guest OS (Windows)",
+    "proto": "TCP",
+    "port": "6160, 11731",
+    "notes": "Port 11731 is used for failover if port 6160 is unavailable."
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "VM guest OS (Windows)",
+    "proto": "TCP",
+    "port": "6173",
+    "notes": "—"
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "Gateway server",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "Port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "ESXi server",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Required for connections to ESXi host.<br>This port must be opened to ensure proper communication with the non-persistent runtime components deployed inside the VM guest OS for application-aware processing and indexing.<br>\\[For VMware vSphere earlier than 6.5\\] Not required if vCenter connection is used. In VMware vSphere versions 6.5 and later, port 443 is required by vCenter Web Services."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Log shipping server",
+    "proto": "TCP",
+    "port": "445, 135, 137, 139",
+    "notes": "NOT required if the [Veeam Deployment Kit](https://helpcenter.veeam.com/docs/vbr/userguide/deployment_kit.html) is installed on the backup infrastructure component.<br>137 and 139 are legacy ports. If your backup infrastructure components do not use SMB 1.0, they are not required."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Log shipping server",
+    "proto": "TCP",
+    "port": "6160",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Log shipping server",
+    "proto": "TCP",
+    "port": "6162",
+    "notes": "—"
+  },
+  {
+    "src": "Hyper-V host",
+    "dst": "Log shipping server (backup server)",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "Required only if the log shipping server transfers data over PowerShell Direct. In this case, the backup server performs the role of the log shipping server.<br>Port range 2500 - 3300 is optional. You can use it for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "VM guest OS<br>(VM with MS SQL, Oracle, or PostgreSQL)",
+    "dst": "Log shipping server",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "—"
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "MS SQL VM guest OS",
+    "proto": "TCP",
+    "port": "445, 135, 137, 139",
+    "notes": "For non-persistent runtime components only.<br>These ports are not required: <br>- When working in networkless mode over /vSphere Web Services or PowerShell Direct.<br>- If the [Veeam Deployment Kit](https://helpcenter.veeam.com/docs/vbr/userguide/deployment_kit.html) is installed on the backup infrastructure component.<br>137 and 139 are legacy ports. If your backup infrastructure components do not use SMB 1.0, they are not required."
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "MS SQL VM guest OS",
+    "proto": "TCP",
+    "port": "6173",
+    "notes": "—"
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "MS SQL VM guest OS",
+    "proto": "TCP",
+    "port": "6160, 11731",
+    "notes": "For persistent agent components only. <br>Port 11731 is used for failover if port 6160 is unavailable."
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "MS SQL VM guest OS",
+    "proto": "TCP",
+    "port": "6167",
+    "notes": "—"
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "Oracle VM guest OS (Microsoft Windows)",
+    "proto": "TCP",
+    "port": "445, 135",
+    "notes": "For non-persistent runtime components only.<br>These ports are not required: <br>- When working in networkless mode over vSphere Web Services or PowerShell Direct.<br>- If the [Veeam Deployment Kit](https://helpcenter.veeam.com/docs/vbr/userguide/deployment_kit.html) is installed on the backup infrastructure component."
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "Oracle VM guest OS (Microsoft Windows)",
+    "proto": "TCP",
+    "port": "6173",
+    "notes": "—"
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "Oracle VM guest OS (Microsoft Windows)",
+    "proto": "TCP",
+    "port": "6160, 11731",
+    "notes": "For persistent agent components only.<br>Port 11731 is used for failover if port 6160 is unavailable."
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "Oracle VM guest OS (Microsoft Windows)",
+    "proto": "TCP",
+    "port": "6167",
+    "notes": "—"
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "Oracle VM guest OS (Linux)",
+    "proto": "TCP",
+    "port": "2500 to 3300",
+    "notes": "NOT required when working in networkless mode over /vSphere Web Services or PowerShell Direct."
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "Oracle VM guest OS (Linux)",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "For non-persistent runtime components only. <br>NOT required when working in networkless mode over vSphere Web Services."
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "Oracle VM guest OS (Linux)",
+    "proto": "TCP",
+    "port": "6162",
+    "notes": "For persistent agent components only.<br>Required if it is used as a control channel instead of SSH."
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "PostgreSQL VM guest OS",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "For non-persistent runtime components only.<br>NOT required when working in networkless mode over vSphere Web Services."
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "PostgreSQL VM guest OS",
+    "proto": "TCP",
+    "port": "6162",
+    "notes": "For persistent agent components only.<br>Required if it is used as a control channel instead of SSH."
+  },
+  {
+    "src": "Guest interaction proxy",
+    "dst": "PostgreSQL VM guest OS",
+    "proto": "TCP",
+    "port": "2500 to 3300",
+    "notes": "NOT required when working in networkless mode over vSphere Web Services."
+  },
+  {
+    "src": "Log shipping server",
+    "dst": "Backup repository",
+    "proto": "TCP",
+    "port": "6162 or 2500 to 3300",
+    "notes": "Port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "VM guest OS<br>(VM with MS SQL, Oracle, or PostgreSQL)",
+    "dst": "Backup repository",
+    "proto": "TCP",
+    "port": "6162 or 2500 to 3300",
+    "notes": "Required if log shipping servers are not used in the infrastructure and the MS SQL server has a direct connection to the backup repository."
+  },
+  {
+    "src": "Log shipping server",
+    "dst": "Gateway server",
+    "proto": "TCP",
+    "port": "6162 or 2500 to 3300",
+    "notes": "Port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Log shipping server (backup server)",
+    "dst": "Hyper-V host",
+    "proto": "TCP",
+    "port": "6162 or 2500 to 3300",
+    "notes": "Required only if the log shipping server transfers data over PowerShell Direct. In this case, the backup server performs the role of the log shipping server.<br>Port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Log shipping server",
+    "dst": "ESXi host",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "ESXi host (source)",
+    "dst": "CDP proxy (source)",
+    "proto": "TCP",
+    "port": "33032",
+    "notes": "Required for regular CDP."
+  },
+  {
+    "src": "Source workload",
+    "dst": "CDP proxy (source)",
+    "proto": "TCP",
+    "port": "33032",
+    "notes": "Required for universal CDP."
+  },
+  {
+    "src": "CDP proxy (source)",
+    "dst": "CDP proxy (target)",
+    "proto": "TCP",
+    "port": "33033",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "CDP proxy (source and target)",
+    "proto": "TCP",
+    "port": "6182",
+    "notes": "—"
+  },
+  {
+    "src": "CDP proxy (source and target)",
+    "dst": "vCenter Server<br>(VMware CDP — source and target; <br>universal CDP — target)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Required for during initial synchronization and restore operations. The port used can be customized in your vCenter settings."
+  },
+  {
+    "src": "Backup server",
+    "dst": "vCenter Server<br>(VMware CDP — source and target; <br>universal CDP — target)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "ESXi host (source)",
+    "dst": "ESXi host (source)",
+    "proto": "TCP",
+    "port": "33036",
+    "notes": "Required for VMware CDP. This port is used by the source ESXi host for communication between CDP components over HTTPS without HTTP Reverse Proxy."
+  },
+  {
+    "src": "CDP proxy (source and target)",
+    "dst": "ESXi host<br>(VMware CDP — source and target; <br>universal CDP — target)",
+    "proto": "TCP",
+    "port": "902",
+    "notes": "Required for during initial synchronization and restore operations. The port used can be customized in your vCenter settings."
+  },
+  {
+    "src": "ESXi host (target)",
+    "dst": "ESXi host (target)",
+    "proto": "TCP",
+    "port": "33036",
+    "notes": "Required for communication between CDP components over HTTPS without HTTP Reverse Proxy."
+  },
+  {
+    "src": "Backup server",
+    "dst": "ESXi host <br>(VMware CDP — source and target; <br>universal CDP — target)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "ESXi host<br>(VMware CDP — source and target; <br>universal CDP — target)",
+    "proto": "TCP",
+    "port": "33035",
+    "notes": "—"
+  },
+  {
+    "src": "CDP proxy (target)",
+    "dst": "ESXi host (target)",
+    "proto": "TCP",
+    "port": "33032",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Source workload",
+    "proto": "TCP",
+    "port": "33050",
+    "notes": "\\[For universal CDP\\] Port used on the source workload for communication between the Veeam CDP Coordinator Service and Veeam CDP Agent Service over HTTPS."
+  },
+  {
+    "src": "CDP proxy <br>(source and target),<br>ESXi host <br>(VMware CDP — source and target; universal CDP — target),<br>vCenter Server <br>(VMware CDP — source and target; universal CDP — target)",
+    "dst": "Backup server",
+    "proto": "TCP",
+    "port": "33034",
+    "notes": "—"
+  },
+  {
+    "src": "vCenter Server,<br>ESXi host",
+    "dst": "Backup server",
+    "proto": "TCP",
+    "port": "33035",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server,<br>Mount server",
+    "dst": "Helper appliance",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server,<br>Mount server",
+    "dst": "Helper appliance",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "VM guest OS (Linux/Unix)",
+    "dst": "Helper appliance",
+    "proto": "TCP",
+    "port": "21",
+    "notes": "Required if FTP server is enabled."
+  },
+  {
+    "src": "Backup server,<br>Mount server",
+    "dst": "Helper host",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server,<br>Mount server",
+    "dst": "Helper host",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Helper appliance,<br>Helper host",
+    "dst": "VM guest OS (Linux/Unix)",
+    "proto": "TCP",
+    "port": "2500 to 3300",
+    "notes": "—"
+  },
+  {
+    "src": "Helper appliance",
+    "dst": "VM guest OS (Linux/Unix)",
+    "proto": "TCP",
+    "port": "20",
+    "notes": "Required if FTP server is enabled."
+  },
+  {
+    "src": "Backup server",
+    "dst": "VM guest OS (Linux/Unix)",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "—"
+  },
+  {
+    "src": "Mount server",
+    "dst": "VM guest OS (Microsoft Windows)",
+    "proto": "TCP",
+    "port": "445, 135",
+    "notes": "—"
+  },
+  {
+    "src": "Mount server",
+    "dst": "VM guest OS (Microsoft Windows)",
+    "proto": "TCP",
+    "port": "6160, 11731",
+    "notes": "Port 11731 is used for failover if port 6160 is unavailable."
+  },
+  {
+    "src": "Mount server",
+    "dst": "VM guest OS (Microsoft Windows)",
+    "proto": "TCP",
+    "port": "6162",
+    "notes": "Required for file-level restore."
+  },
+  {
+    "src": "Backup server",
+    "dst": "VM guest OS",
+    "proto": "TCP",
+    "port": "2500 to 3300",
+    "notes": "—"
+  },
+  {
+    "src": "Mount server,<br>Helper appliance,<br>Helper host",
+    "dst": "Backup repository",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Mount server",
+    "dst": "vCenter server",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "Mount server",
+    "dst": "ESXi host",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "Helper appliance,<br>Helper host",
+    "dst": "ESXi host",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Required if restore performed over vSphere Web Services. <br>\\[For VMware vSphere earlier than 6.5\\] Not required if vCenter connection is used. In VMware vSphere versions 6.5 and later, port 443 is required by vSphere Web Services."
+  },
+  {
+    "src": "Mount server",
+    "dst": "Veeam Signature Update Server<br>(avupdate.veeam.com)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Proxy appliance",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Applications on VMs in the virtual lab",
+    "proto": "—",
+    "port": "—",
+    "notes": "Application-specific ports to perform port probing test. For example, to verify a DC, Veeam Backup & Replication probes port 389 for a response."
+  },
+  {
+    "src": "Internet-facing proxy server",
+    "dst": "VMs in the virtual lab",
+    "proto": "TCP",
+    "port": "8080",
+    "notes": "Required to allow VMs in a virtual lab access the Internet."
+  },
+  {
+    "src": "Mount server running vPower NFS Service",
+    "dst": "ESXi server",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "Backup repository<br>Gateway server working with backup repository",
+    "dst": "Hyper-V server",
+    "proto": "TCP",
+    "port": "6162, 2500 to 3300",
+    "notes": "The port range 2500-3300 is used for failover if port 6162 is unavailable."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Microsoft <br>Active Directory VM guest OS",
+    "proto": "TCP",
+    "port": "135",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Microsoft <br>Active Directory VM guest OS",
+    "proto": "TCP,<br>UDP",
+    "port": "389",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Microsoft <br>Active Directory VM guest OS",
+    "proto": "TCP",
+    "port": "636, 3268, 3269",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Microsoft Exchange 2003/2007 CAS Server",
+    "proto": "TCP",
+    "port": "80, 443",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Microsoft Exchange 2010/2013/2016/2019 CAS Server",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Microsoft SQL VM guest OS",
+    "proto": "TCP",
+    "port": "1433, 1434 and other",
+    "notes": "Port numbers depends on configuration of your Microsoft SQL server. For more information, see [this Microsoft article](https://msdn.microsoft.com/en-us/library/cc646023.aspx#BKMK_ssde)."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Microsoft SQL VM guest OS",
+    "proto": "UDP",
+    "port": "1434",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server or <br>Backup repository",
+    "dst": "Helper appliance",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server or <br>Backup repository",
+    "dst": "Helper appliance",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "You can change this port in helper appliance settings. For details, see the Specify Helper Appliance section in [Restore to Amazon EC2](https://helpcenter.veeam.com/docs/vbr/userguide/restore_amazon_proxy.html) and [Restore to Google Cloud](https://helpcenter.veeam.com/docs/vbr/userguide/restore_google_proxy_appliance.html)."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Microsoft Azure Resource Manager service<br>(https://management.azure.com)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Microsoft Entra ID<br>(https://login.microsoftonline.com)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "—"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Microsoft Azure storage accounts (blob storage)<br>(<storage-account>.blob.core.windows.net, <storage-account>.blob.storage.azure.net)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Required for restored Windows-based VM conversion. Restored disks are temporarily mounted to the backup server.<br>Consider that the <storage-account> part of the address must be replaced with your actual storage account URL that can be found in the Azure management portal."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Azure Windows VM agent distribution location<br>(go.microsoft.com, aka.ms, github.com, objects.githubusercontent.com)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Consider that these URLs used are subject to change. For more information, see [this Microsoft article](https://learn.microsoft.com/en-us/azure/virtual-machines/extensions/agent-windows#install-the-azure-windows-vm-agent)."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Microsoft Azure CRL distribution points",
+    "proto": "TCP",
+    "port": "80",
+    "notes": "Port used to verify the certificate status through the certificate verification endpoints (CRL URLs and OCSP servers).<br>These endpoints are subject to change. You can find the actual list of addresses in [this Microsoft article](https://learn.microsoft.com/en-us/azure/security/fundamentals/azure-CA-details?tabs=root-and-subordinate-cas-list#certificate-downloads-and-revocation-lists) or in the certificate details in the following fields:<br>- CRL Distribution Points<br>- Authority Information Access<br>Make sure that the backup server can reach these verification endpoints."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Helper appliance",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "Required when restoring Linux workloads. This port can be changed during helper appliance deployment. For details, see [Managing Helper Appliances](https://helpcenter.veeam.com/docs/vbr/userguide/restore_azure_linux.html)."
+  },
+  {
+    "src": "Backup server or backup repository",
+    "dst": "Azure restore proxy appliance",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "The port must be accessible from the backup server and backup repository storing VM backups.<br>This port can be changed in the settings of the Azure Restore proxy appliance. For details, see [Specify Credentials and Transport Port](https://helpcenter.veeam.com/docs/vbr/userguide/restore_azure_proxy_credentials.html)."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Microsoft Azure Resource Manager service <br>(https://management.azure.com)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Service Tag: AzureResourceManager"
+  },
+  {
+    "src": "Backup server",
+    "dst": "Microsoft Azure storage account (Veeam packages upload)<br>(<storage-account>.queue.core.windows.net, <storage-account>.queue.storage.azure.net)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Consider that the <storage-account> part of the address must be replaced with your actual storage account URL that can be found in the Azure management portal.<br>Service Tag: Storage"
+  },
+  {
+    "src": "Temporary Azure VMs used to create templates of Instant Recovery to Azure helper appliances",
+    "dst": "Microsoft Azure storage account (Veeam packages upload)<br>(<storage-account>.blob.core.windows.net, <storage-account>.blob.storage.azure.net)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Consider that the <storage-account> part of the address must be replaced with your actual storage account URL that can be found in the Azure management portal.<br>Service Tag: Storage"
+  },
+  {
+    "src": "Backup server,<br>Instant Recovery for Azure helper appliance",
+    "dst": "Microsoft Azure storage account (message queues)<br>(<storage-account>.queue.core.windows.net, <storage-account>.queue.storage.azure.net)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Consider that the <storage-account> part of the address must be replaced with your actual storage account URL that can be found in the Azure management portal.<br>Service Tag: Storage"
+  },
+  {
+    "src": "Temporary Azure VMs used to create templates of Instant Recovery to Azure helper appliances",
+    "dst": "Microsoft Azure storage account (message queues)<br>(<storage-account>.blob.core.windows.net, <storage-account>.blob.storage.azure.net)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Consider that the <storage-account> part of the address must be replaced with your actual storage account URL that can be found in the Azure management portal.<br>Service Tag: Storage"
+  },
+  {
+    "src": "Instant Recovery for Azure helper appliance",
+    "dst": "Microsoft Azure storage account (backup repository) / Veeam Data Cloud Vault (backup repository)<br>(<storage-account>.blob.core.windows.net, <storage-account>.blob.storage.azure.net)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Consider that the <storage-account> part of the address must be replaced with the ID of your storage vault. You can find the storage vault ID in the Storage Vaults \\> Vault ID section in Veeam Data Cloud Vault. For more information, see the [Managing Storage Vaults](https://helpcenter.veeam.com/docs/vdc/userguide/vault_storage_vaults_edit.html#viewing-storage-vault-details) section in the Veeam Data Cloud User Guide.<br>Service Tag: Storage"
+  },
+  {
+    "src": "Backup server,<br>Instant Recovery for Azure helper appliance",
+    "dst": "Microsoft Entra ID<br>(https://login.microsoftonline.com)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Service Tag: AzureActiveDirectory"
+  },
+  {
+    "src": "Backup server,<br>Instant Recovery for Azure helper appliance,<br>Temporary Azure VMs used to create templates of Instant Recovery to Azure helper appliances",
+    "dst": "Microsoft Azure CRL distribution points",
+    "proto": "TCP",
+    "port": "80",
+    "notes": "Port used to verify the certificate status through the certificate verification endpoints (CRL URLs and OCSP servers).<br>These endpoints are subject to change. You can find the actual list of addresses in [this Microsoft article](https://learn.microsoft.com/en-us/azure/security/fundamentals/azure-CA-details?tabs=root-and-subordinate-cas-list#certificate-downloads-and-revocation-lists) or in the certificate details in the following fields:<br>- CRL Distribution Points<br>- Authority Information Access<br>Make sure that the backup server, helper appliance and temporary VMs can reach these verification endpoints."
+  },
+  {
+    "src": "Instant Recovery for Azure helper appliance",
+    "dst": "Azure Windows VM Agent Distribution location<br>(go.microsoft.com, aka.ms, github.com, objects.githubusercontent.com)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Consider that these URLs are subject to change. For more information, see [this Microsoft article](https://learn.microsoft.com/en-us/azure/virtual-machines/extensions/agent-windows#install-the-azure-windows-vm-agent)."
+  },
+  {
+    "src": "Instant Recovery for Azure helper appliance",
+    "dst": "Azure Instance Metadata Service endpoint<br>(http://169.254.169.254)",
+    "proto": "TCP",
+    "port": "80",
+    "notes": "Required for Entra ID authentication to access storage accounts and message queues and other purposes.<br>Service Tag: AzureActiveDirectory"
+  },
+  {
+    "src": "Temporary Azure VMs used to create templates of Instant Recovery to Azure helper appliances",
+    "dst": "Ubuntu Azure repository<br>(http://azure.archive.ubuntu.com/ubuntu/)",
+    "proto": "TCP",
+    "port": "80",
+    "notes": ""
+  },
+  {
+    "src": "Restored VM",
+    "dst": "Instant Recovery to Azure helper appliance",
+    "proto": "TCP",
+    "port": "3260-3262",
+    "notes": "—"
+  },
+  {
+    "src": "Restored VM",
+    "dst": "Instant Recovery to Azure helper appliance",
+    "proto": "TCP",
+    "port": "9555",
+    "notes": "—"
+  }
+];
