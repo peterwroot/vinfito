@@ -2303,5 +2303,91 @@ const PORT_DB = [
     "proto": "TCP",
     "port": "9555",
     "notes": "—"
+  },
+
+  {
+    "src": "Worker",
+    "dst": "Xen pool",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Used to communicate with the XAPI management service running on the Xen pool."
+  },
+  {
+    "src": "Worker",
+    "dst": "Xen pool",
+    "proto": "NBD/TLS",
+    "port": "10809",
+    "notes": "Used to communicate with Xen pools when using the NBD transport mode."
+  },
+  {
+    "src": "Worker",
+    "dst": "Backup server",
+    "proto": "TCP",
+    "port": "10006",
+    "notes": "Used to communicate with the backup server."
+  },
+  {
+    "src": "Worker",
+    "dst": "Veeam backup repository or gateway server",
+    "proto": "TCP",
+    "port": "2500-3300",
+    "notes": "Default range of ports used as transmission channels for jobs and restore sessions. For each TCP connection that a job uses, one port from this range is assigned."
+  },
+  {
+    "src": "Worker",
+    "dst": "Veeam backup repository or gateway server",
+    "proto": "TCP",
+    "port": "6162",
+    "notes": "Default port used by Veeam Transport Service (on Linux servers) or Veeam Data Mover Service (on Windows servers)"
+  },
+  {
+    "src": "Worker",
+    "dst": "Veeam Update Repository<br>(repository.veeam.com)<br>Amazon CloudFront<br>(cloudfront.net, amazonaws.com)",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Used to download worker deployment packages.<br>Note: Veeam Update Repository uses the Amazon CloudFront service to distribute traffic when downloading product updates."
+  },
+  {
+    "src": "Worker",
+    "dst": "NTP server",
+    "proto": "UDP",
+    "port": "123",
+    "notes": "Used for time synchronization with NTP servers."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Worker",
+    "proto": "TCP",
+    "port": "19000",
+    "notes": "Used to communicate with workers."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Worker",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Used by the Platform Service to enable communication with the Veeam Updater service on the worker."
+  },
+  {
+    "src": "Backup server",
+    "dst": "Worker",
+    "proto": "TCP",
+    "port": "6172",
+    "notes": "Used by the Platform Service to enable communication with the Veeam Backup & Replication database."
+  },
+  {
+    "src": "Xen pool",
+    "dst": "Worker",
+    "proto": "TCP",
+    "port": "443",
+    "notes": "Used to communicate with the XAPI management service running on the Xen pool."
+  },
+  {
+    "src": "File-level recovery (FLR) helper appliance",
+    "dst": "Worker",
+    "proto": "TCP",
+    "port": "22",
+    "notes": "[Optional] Used to connect to the helper appliance during file-level restore."
   }
+
 ];
