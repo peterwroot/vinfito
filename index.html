@@ -87,6 +87,31 @@
   .fqdn-input:focus { outline: none; border-color: var(--accent); }
   .fqdn-input::placeholder { color: var(--muted); opacity: 0.6; }
 
+  .component-category {
+    margin-bottom: 18px;
+  }
+  .component-category:last-child { margin-bottom: 0; }
+  .component-category-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    color: var(--fg);
+    font-size: 0.86rem;
+    font-weight: 600;
+  }
+  .component-category-title::before {
+    content: '';
+    width: 4px;
+    height: 1.1em;
+    border-radius: 2px;
+    background: var(--accent);
+  }
+  .component-category-description {
+    margin: -2px 0 8px 12px;
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
   .checkbox-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -2661,58 +2686,66 @@ const PORT_DB = [
 ];
 
 // Components map UI selections to wording used in Veeam's From/To tables.
+const COMPONENT_CATEGORIES = [
+  { id: 'infrastructure', label: 'Infrastructure Components', description: 'Core Veeam servers, proxies, consoles, and virtualization components.' },
+  { id: 'repositories', label: 'Backup Repositories', description: 'Repository, storage, object-storage, and tape targets.' },
+  { id: 'sources', label: 'Backup Sources', description: 'NAS filers, file shares, protected workloads, and source-side components.' },
+  { id: 'cloud', label: 'Cloud & Veeam-Hosted Services', description: 'Veeam-hosted services and cloud APIs.' },
+  { id: 'misc', label: 'Miscellaneous Services', description: 'Databases, directory services, logging, mail, DNS, time, and update services.' },
+];
+
 const COMPONENTS = [
-  { id:'backup_server', label:'Backup Server', roles:['Backup Server'], infrastructure:true },
-  { id:'backup_proxy', label:'Backup Proxy', roles:['Backup Proxy'], infrastructure:true },
-  { id:'gateway_server', label:'Gateway Server', roles:['Gateway Server'], infrastructure:true },
-  { id:'repository', label:'Backup Repository', roles:['Backup Repository'], infrastructure:true },
-  { id:'mount_server', label:'Mount Server', roles:['Mount Server'], infrastructure:true },
-  { id:'veeam_infra_appliance', label:'Veeam Infrastructure Appliance', roles:['Veeam Infrastructure Appliance'], infrastructure:true },
-  { id:'web_ui_pc', label:'Web UI / Management Console PC', roles:['Web UI and Host Management console PC','Web UI PC','Veeam Backup & Replication console'], infrastructure:true },
-  { id:'remote_access_pc', label:'Remote Access PC', roles:['Remote Access PC'], infrastructure:true },
-  { id:'rest_client', label:'REST Client', roles:['REST Client'], infrastructure:true },
-  { id:'vcenter', label:'vCenter Server', roles:['vCenter Server'], infrastructure:true },
-  { id:'esxi', label:'ESXi Server', roles:['ESXi Server','ESXi Host'], infrastructure:true },
-  { id:'hyper_v', label:'Hyper-V Server', roles:['Hyper-V Server','Hyper-V Host'], infrastructure:true },
-  { id:'scvmm', label:'SCVMM', roles:['SCVMM'], infrastructure:true },
-  { id:'vm_guest_os', label:'VM Guest OS', roles:['VM Guest OS','VMs in the virtual lab'], infrastructure:true },
-  { id:'guest_interaction_proxy', label:'Guest Interaction Proxy', roles:['Guest Interaction Proxy'], infrastructure:true },
-  { id:'log_shipping_server', label:'Log Shipping Server', roles:['Log Shipping Server'], infrastructure:true },
-  { id:'wan_accelerator', label:'WAN Accelerator', roles:['WAN Accelerator'], infrastructure:true },
-  { id:'cdp_proxy', label:'CDP Proxy', roles:['CDP Proxy'], infrastructure:true },
-  { id:'source_workload', label:'Source Workload (CDP)', roles:['Source Workload'], infrastructure:true },
-  { id:'tape_server', label:'Tape Server', roles:['Tape Server'], infrastructure:true },
-  { id:'helper_appliance', label:'Helper Appliance', roles:['Helper Appliance'], infrastructure:true },
-  { id:'helper_host', label:'Helper Host', roles:['Helper Host'], infrastructure:true },
-  { id:'proxy_appliance', label:'Proxy Appliance (SureBackup/SureReplica)', roles:['Proxy Appliance'], infrastructure:true },
-  { id:'nfs_share', label:'NFS Share', roles:['NFS Share'], infrastructure:false },
-  { id:'smb_share', label:'SMB/CIFS Share', roles:['SMB Share','CIFS Share'], infrastructure:false },
-  { id:'file_server', label:'File Server', roles:['File Server'], infrastructure:true },
-  { id:'nas_filer', label:'NAS Filer', roles:['NAS Filer'], infrastructure:true },
-  { id:'cache_repository', label:'Cache Repository', roles:['Cache Repository'], infrastructure:true },
-  { id:'dedup_appliance', label:'Deduplicating Appliance', roles:['Deduplicating Appliance'], infrastructure:true },
-  { id:'dd_data_domain', label:'Dell Data Domain', roles:['Dell Data Domain'], infrastructure:true },
-  { id:'hpe_storeonce', label:'HPE StoreOnce', roles:['HPE StoreOnce'], infrastructure:true },
-  { id:'storage_system', label:'Storage System', roles:['Storage System'], infrastructure:true },
-  { id:'object_storage', label:'Object Storage', roles:['Object Storage','Smart Object Storage API','Amazon S3','Microsoft Azure Object Storage','IBM Cloud Object Storage'], infrastructure:false },
-  { id:'veeam_one', label:'Veeam ONE', roles:['Veeam ONE Server','Veeam ONE Web Services Server'], infrastructure:true },
-  { id:'smtp_server', label:'SMTP Server', roles:['SMTP Server'], infrastructure:false },
-  { id:'dns_server', label:'DNS Server', roles:['DNS Server'], infrastructure:false },
-  { id:'ntp_server', label:'NTP/NTS Server', roles:['NTP Server','NTS Server'], infrastructure:false },
-  { id:'ad_dc', label:'Active Directory Domain Controller', roles:['Active Directory Domain Controllers'], infrastructure:false },
-  { id:'postgresql_db', label:'PostgreSQL Config DB', roles:['PostgreSQL Configuration Database'], infrastructure:false },
-  { id:'mssql_db', label:'Microsoft SQL Config DB', roles:['Microsoft SQL Server'], infrastructure:false },
-  { id:'kmip_server', label:'KMIP Server', roles:['Key Management System (KMIP) Server'], infrastructure:false },
-  { id:'syslog_server', label:'Syslog Server', roles:['Syslog Server'], infrastructure:false },
-  { id:'ndmp_server', label:'NDMP Server', roles:['NDMP Server'], infrastructure:false },
-  { id:'veeam_update_repo', label:'Veeam Update Repository', roles:['Veeam Update Repository'], infrastructure:false },
-  { id:'veeam_update_server', label:'Veeam Update Server', roles:['Veeam Update Server'], infrastructure:false },
-  { id:'veeam_update_notify', label:'Veeam Update Notification Server', roles:['Veeam Update Notification Server'], infrastructure:false },
-  { id:'veeam_ai_assistant', label:'Veeam AI Assistant', roles:['Veeam AI Assistant'], infrastructure:false },
-  { id:'veeam_data_cloud_vault', label:'Veeam Data Cloud Vault', roles:['Veeam Data Cloud Vault'], infrastructure:false },
-  { id:'microsoft_graph', label:'Microsoft Graph API', roles:['Microsoft Graph REST API'], infrastructure:false },
-  { id:'gmail_api', label:'Gmail REST API', roles:['Gmail REST API'], infrastructure:false },
-  { id:'crl_distribution', label:'CRL Distribution Points', roles:['Certificate Revocation Lists','CRL Distribution Points'], infrastructure:false },
+  { id:'backup_server', category:'infrastructure', label:'Backup Server', roles:['Backup Server'], infrastructure:true },
+  { id:'backup_proxy', category:'infrastructure', label:'Backup Proxy', roles:['Backup Proxy'], infrastructure:true },
+  { id:'gateway_server', category:'infrastructure', label:'Gateway Server', roles:['Gateway Server'], infrastructure:true },
+  { id:'repository', category:'repositories', label:'Backup Repository', roles:['Backup Repository'], infrastructure:true },
+  { id:'mount_server', category:'infrastructure', label:'Mount Server', roles:['Mount Server'], infrastructure:true },
+  { id:'veeam_infra_appliance', category:'infrastructure', label:'Veeam Infrastructure Appliance', roles:['Veeam Infrastructure Appliance'], infrastructure:true },
+  { id:'web_ui_pc', category:'infrastructure', label:'Web UI / Management Console PC', roles:['Web UI and Host Management console PC','Web UI PC','Veeam Backup & Replication console'], infrastructure:true },
+  { id:'remote_access_pc', category:'infrastructure', label:'Remote Access PC', roles:['Remote Access PC'], infrastructure:true },
+  { id:'rest_client', category:'infrastructure', label:'REST Client', roles:['REST Client'], infrastructure:true },
+  { id:'vcenter', category:'infrastructure', label:'vCenter Server', roles:['vCenter Server'], infrastructure:true },
+  { id:'esxi', category:'infrastructure', label:'ESXi Server', roles:['ESXi Server','ESXi Host'], infrastructure:true },
+  { id:'hyper_v', category:'infrastructure', label:'Hyper-V Server', roles:['Hyper-V Server','Hyper-V Host'], infrastructure:true },
+  { id:'scvmm', category:'infrastructure', label:'SCVMM', roles:['SCVMM'], infrastructure:true },
+  { id:'vm_guest_os', category:'sources', label:'VM Guest OS', roles:['VM Guest OS','VMs in the virtual lab'], infrastructure:true },
+  { id:'guest_interaction_proxy', category:'infrastructure', label:'Guest Interaction Proxy', roles:['Guest Interaction Proxy'], infrastructure:true },
+  { id:'log_shipping_server', category:'misc', label:'Log Shipping Server', roles:['Log Shipping Server'], infrastructure:true },
+  { id:'wan_accelerator', category:'infrastructure', label:'WAN Accelerator', roles:['WAN Accelerator'], infrastructure:true },
+  { id:'cdp_proxy', category:'infrastructure', label:'CDP Proxy', roles:['CDP Proxy'], infrastructure:true },
+  { id:'source_workload', category:'sources', label:'Source Workload (CDP)', roles:['Source Workload'], infrastructure:true },
+  { id:'tape_server', category:'repositories', label:'Tape Server', roles:['Tape Server'], infrastructure:true },
+  { id:'helper_appliance', category:'infrastructure', label:'Helper Appliance', roles:['Helper Appliance'], infrastructure:true },
+  { id:'helper_host', category:'infrastructure', label:'Helper Host', roles:['Helper Host'], infrastructure:true },
+  { id:'proxy_appliance', category:'infrastructure', label:'Proxy Appliance (SureBackup/SureReplica)', roles:['Proxy Appliance'], infrastructure:true },
+  { id:'nfs_share', category:'sources', label:'NFS Share', roles:['NFS Share'], infrastructure:false },
+  { id:'smb_share', category:'sources', label:'SMB/CIFS Share', roles:['SMB Share','CIFS Share'], infrastructure:false },
+  { id:'file_server', category:'sources', label:'File Server', roles:['File Server'], infrastructure:true },
+  { id:'nas_filer', category:'sources', label:'NAS Filer', roles:['NAS Filer'], infrastructure:true },
+  { id:'cache_repository', category:'repositories', label:'Cache Repository', roles:['Cache Repository'], infrastructure:true },
+  { id:'dedup_appliance', category:'repositories', label:'Deduplicating Appliance', roles:['Deduplicating Appliance'], infrastructure:true },
+  { id:'dd_data_domain', category:'repositories', label:'Dell Data Domain', roles:['Dell Data Domain'], infrastructure:true },
+  { id:'hpe_storeonce', category:'repositories', label:'HPE StoreOnce', roles:['HPE StoreOnce'], infrastructure:true },
+  { id:'storage_system', category:'repositories', label:'Storage System', roles:['Storage System'], infrastructure:true },
+  { id:'object_storage', category:'repositories', label:'Object Storage', roles:['Object Storage','Smart Object Storage API','Amazon S3','Microsoft Azure Object Storage','IBM Cloud Object Storage'], infrastructure:false },
+  { id:'veeam_one', category:'misc', label:'Veeam ONE', roles:['Veeam ONE Server','Veeam ONE Web Services Server'], infrastructure:true },
+  { id:'smtp_server', category:'misc', label:'SMTP Server', roles:['SMTP Server'], infrastructure:false },
+  { id:'dns_server', category:'misc', label:'DNS Server', roles:['DNS Server'], infrastructure:false },
+  { id:'ntp_server', category:'misc', label:'NTP/NTS Server', roles:['NTP Server','NTS Server'], infrastructure:false },
+  { id:'ad_dc', category:'misc', label:'Active Directory Domain Controller', roles:['Active Directory Domain Controllers'], infrastructure:false },
+  { id:'postgresql_db', category:'misc', label:'PostgreSQL Config DB', roles:['PostgreSQL Configuration Database'], infrastructure:false },
+  { id:'mssql_db', category:'misc', label:'Microsoft SQL Config DB', roles:['Microsoft SQL Server'], infrastructure:false },
+  { id:'kmip_server', category:'misc', label:'KMIP Server', roles:['Key Management System (KMIP) Server'], infrastructure:false },
+  { id:'syslog_server', category:'misc', label:'Syslog Server', roles:['Syslog Server'], infrastructure:false },
+  { id:'ndmp_server', category:'misc', label:'NDMP Server', roles:['NDMP Server'], infrastructure:false },
+  { id:'veeam_update_repo', category:'cloud', label:'Veeam Update Repository', roles:['Veeam Update Repository'], infrastructure:false },
+  { id:'veeam_update_server', category:'cloud', label:'Veeam Update Server', roles:['Veeam Update Server'], infrastructure:false },
+  { id:'veeam_update_notify', category:'cloud', label:'Veeam Update Notification Server', roles:['Veeam Update Notification Server'], infrastructure:false },
+  { id:'veeam_ai_assistant', category:'cloud', label:'Veeam AI Assistant', roles:['Veeam AI Assistant'], infrastructure:false },
+  { id:'veeam_data_cloud_vault', category:'cloud', label:'Veeam Data Cloud Vault', roles:['Veeam Data Cloud Vault'], infrastructure:false },
+  { id:'microsoft_graph', category:'cloud', label:'Microsoft Graph API', roles:['Microsoft Graph REST API'], infrastructure:false },
+  { id:'gmail_api', category:'cloud', label:'Gmail REST API', roles:['Gmail REST API'], infrastructure:false },
+  { id:'crl_distribution', category:'misc', label:'CRL Distribution Points', roles:['Certificate Revocation Lists','CRL Distribution Points'], infrastructure:false },
 ];
 
 const { parseAddresses, buildRules } = VinfitoCore;
@@ -2729,18 +2762,30 @@ const toast = $('toast');
 
 function initComponents() {
   checkboxGrid.innerHTML = '';
-  COMPONENTS.forEach(component => {
-    const label = document.createElement('label');
-    label.className = 'checkbox-label';
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.value = component.id;
-    checkbox.addEventListener('change', () => {
-      checkbox.checked ? state.selected.add(component.id) : state.selected.delete(component.id);
-      renderAddressFields();
+  COMPONENT_CATEGORIES.forEach(category => {
+    const categoryComponents = COMPONENTS.filter(component => component.category === category.id);
+    if (!categoryComponents.length) return;
+    const section = document.createElement('section');
+    section.className = 'component-category';
+    section.innerHTML = `<h4 class="component-category-title">${escHtml(category.label)}</h4>
+      <p class="component-category-description">${escHtml(category.description)}</p>`;
+    const grid = document.createElement('div');
+    grid.className = 'checkbox-grid';
+    categoryComponents.forEach(component => {
+      const label = document.createElement('label');
+      label.className = 'checkbox-label';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.value = component.id;
+      checkbox.addEventListener('change', () => {
+        checkbox.checked ? state.selected.add(component.id) : state.selected.delete(component.id);
+        renderAddressFields();
+      });
+      label.append(checkbox, document.createTextNode(component.label));
+      grid.appendChild(label);
     });
-    label.append(checkbox, document.createTextNode(component.label));
-    checkboxGrid.appendChild(label);
+    section.appendChild(grid);
+    checkboxGrid.appendChild(section);
   });
 }
 
@@ -2750,15 +2795,25 @@ function renderAddressFields() {
     addressesPanel.innerHTML = '<p class="empty-selection">Select components above to enter their addresses.</p>';
     return;
   }
-  addressesPanel.innerHTML = selected.map(component => `
-    <div class="component-row">
-      <label class="checkbox-label" for="address-${component.id}">${escHtml(component.label)}</label>
-      <div>
-        <textarea class="address-field" id="address-${component.id}" data-component="${component.id}"
-          placeholder="${component.id === 'backup_server' ? 'backup01.example.com, backup02.example.com' : 'hostname.example.com or 10.0.0.10'}">${escHtml(state.addresses[component.id] || '')}</textarea>
-        <div class="address-help">${parseAddresses(state.addresses[component.id]).length || 0} address(es)</div>
-      </div>
-    </div>`).join('');
+
+  // Keep address fields in the same category order as the checkboxes above.
+  addressesPanel.innerHTML = COMPONENT_CATEGORIES.map(category => {
+    const categoryComponents = selected.filter(component => component.category === category.id);
+    if (!categoryComponents.length) return '';
+    return `<section class="component-category">
+      <h4 class="component-category-title">${escHtml(category.label)}</h4>
+      <div class="component-addresses">${categoryComponents.map(component => `
+        <div class="component-row">
+          <label class="checkbox-label" for="address-${component.id}">${escHtml(component.label)}</label>
+          <div>
+            <textarea class="address-field" id="address-${component.id}" data-component="${component.id}"
+              placeholder="${component.id === 'backup_server' ? 'backup01.example.com, backup02.example.com' : 'hostname.example.com or 10.0.0.10'}">${escHtml(state.addresses[component.id] || '')}</textarea>
+            <div class="address-help">${parseAddresses(state.addresses[component.id]).length || 0} address(es)</div>
+          </div>
+        </div>`).join('')}</div>
+    </section>`;
+  }).join('');
+
   addressesPanel.querySelectorAll('.address-field').forEach(field => {
     field.addEventListener('input', () => {
       state.addresses[field.dataset.component] = field.value;
