@@ -54,27 +54,31 @@
     color: var(--muted);
     font-family: monospace;
   }
-  .badge.veeam { color: var(--accent); background: rgba(108,140,255,0.12); }
-  .badge.ver { background: rgba(251,191,36,0.1); color: var(--warn); }
+  .badge.veeam { color: var(--accent); background: rgba(0,209,95,0.1); }
+  .badge.ver { background: rgba(255,216,57,0.1); color: var(--warn); }
 
+  .setup-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(320px, .85fr);
+    gap: 16px;
+    align-items: start;
+    margin-bottom: 18px;
+  }
   .config-panel {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 24px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    border-radius: 8px;
+    padding: 14px;
+    min-width: 0;
   }
   .config-panel.full { grid-template-columns: 1fr; }
   .config-section h3 {
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: 0.78rem;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--muted);
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
   .fqdn-input {
     width: 100%;
@@ -325,11 +329,11 @@
   .empty-selection { color: var(--muted); font-size: .8rem; padding: 4px 0; }
 
   @media (max-width: 980px) {
+    .setup-grid { grid-template-columns: 1fr; }
     #componentCheckboxes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
   @media (max-width: 640px) {
     body { padding: 12px; }
-    .config-panel { grid-template-columns: 1fr; }
     #componentCheckboxes { grid-template-columns: 1fr; }
     .component-row { grid-template-columns: 1fr; }
     th, td { padding: 8px 10px; font-size: 0.75rem; }
@@ -348,30 +352,32 @@
     </div>
   </header>
 
-  <div class="config-panel full">
-    <div class="config-section">
-      <h3>1. Select Components</h3>
-      <div class="checkbox-grid" id="componentCheckboxes"></div>
-      <p style="margin-top:10px;font-size:0.75rem;color:var(--muted)">
-        Select at least two endpoints. A rule is included only when both its source and destination map to selected components.
-      </p>
-    </div>
-  </div>
-
-  <div class="config-panel full" style="margin-top:0">
-    <div class="config-section">
-      <h3>2. Component Addresses</h3>
-      <div class="component-addresses" id="componentAddresses">
-        <p class="empty-selection">Select components above to enter their addresses.</p>
+  <div class="setup-grid">
+    <section class="config-panel">
+      <div class="config-section">
+        <h3>1. Select Components</h3>
+        <div class="checkbox-grid" id="componentCheckboxes"></div>
+        <p style="margin-top:10px;font-size:0.7rem;color:var(--muted)">
+          Select at least two endpoints. Rules are included only when both sides map to selected components.
+        </p>
       </div>
-      <p style="margin-top:10px;font-size:0.75rem;color:var(--muted)">
-        Enter one or more FQDNs or IP addresses for every selected component. Separate multiple addresses with commas, semicolons, or new lines.
-      </p>
-      <label class="same-endpoint-toggle" style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:0.8rem;cursor:pointer">
-        <input type="checkbox" id="excludeSameEndpoints">
-        Exclude rules where the source and destination address are the same
-      </label>
-    </div>
+    </section>
+
+    <section class="config-panel">
+      <div class="config-section">
+        <h3>2. Component Addresses</h3>
+        <div class="component-addresses" id="componentAddresses">
+          <p class="empty-selection">Select components to enter their addresses.</p>
+        </div>
+        <p style="margin-top:10px;font-size:0.7rem;color:var(--muted)">
+          Separate multiple addresses with commas, semicolons, or new lines.
+        </p>
+        <label class="same-endpoint-toggle" style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:0.72rem;cursor:pointer">
+          <input type="checkbox" id="excludeSameEndpoints">
+          Exclude same-address rules
+        </label>
+      </div>
+    </section>
   </div>
 
   <div class="action-bar">
