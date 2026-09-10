@@ -6,18 +6,21 @@
 <title>Veeam Firewall Rule Generator</title>
 <style>
   :root {
-    --bg: #0f1117;
-    --card: #1a1d28;
-    --card-hover: #22263a;
-    --border: #2a2e42;
-    --fg: #e4e6f0;
-    --muted: #8b8fa3;
-    --accent: #6c8cff;
-    --accent-hover: #5a7ae8;
-    --row-alt: #161924;
-    --danger: #f87171;
-    --success: #4ade80;
-    --warn: #fbbf24;
+    /* Veeam brand palette: Viridis, Pine, Lime, and official greys. */
+    --bg: #080b09;
+    --card: #111613;
+    --card-hover: #17231b;
+    --border: #2b3a30;
+    --fg: #f0f0f0;
+    --muted: #adacaf;
+    --accent: #00d15f;
+    --accent-hover: #32f26f;
+    --accent-soft: #9cffa3;
+    --pine: #007f49;
+    --row-alt: #0d120f;
+    --danger: #ed2b3d;
+    --success: #00d15f;
+    --warn: #ffd839;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -88,50 +91,73 @@
   .fqdn-input::placeholder { color: var(--muted); opacity: 0.6; }
 
   .component-category {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 16px;
     margin-bottom: 18px;
+    background: linear-gradient(145deg, rgba(0,209,95,.07), rgba(0,0,0,0) 42%), var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
   }
   .component-category:last-child { margin-bottom: 0; }
+  #componentCheckboxes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    align-items: stretch;
+  }
+  #componentCheckboxes .component-category { margin-bottom: 0; }
   .component-category-title {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
+    gap: 9px;
+    min-height: 24px;
+    margin-bottom: 6px;
     color: var(--fg);
-    font-size: 0.86rem;
-    font-weight: 600;
+    font-size: 0.9rem;
+    font-weight: 700;
   }
   .component-category-title::before {
     content: '';
+    flex: 0 0 4px;
     width: 4px;
-    height: 1.1em;
+    height: 1.25em;
     border-radius: 2px;
     background: var(--accent);
+    box-shadow: 0 0 10px rgba(0,209,95,.35);
   }
   .component-category-description {
-    margin: -2px 0 8px 12px;
+    min-height: 2.2em;
+    margin: 0 0 12px 13px;
     color: var(--muted);
     font-size: 0.75rem;
+    line-height: 1.45;
   }
   .checkbox-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 8px;
+    grid-template-columns: 1fr;
+    gap: 7px;
+    align-content: start;
   }
   .checkbox-label {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: var(--bg);
+    gap: 9px;
+    min-height: 40px;
+    padding: 8px 11px;
+    background: rgba(8,11,9,.72);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 5px;
     cursor: pointer;
-    transition: all 0.15s;
-    font-size: 0.85rem;
+    transition: border-color .15s, background .15s, transform .15s;
+    font-size: 0.82rem;
+    line-height: 1.25;
     user-select: none;
   }
-  .checkbox-label:hover { border-color: var(--accent); background: var(--card-hover); }
-  .checkbox-label input { accent-color: var(--accent); width: 15px; height: 15px; }
+  .checkbox-label:hover { border-color: var(--accent); background: var(--card-hover); transform: translateY(-1px); }
+  .checkbox-label:has(input:checked) { border-color: var(--accent); background: rgba(0,209,95,.12); color: var(--accent-soft); }
+  .checkbox-label input { flex: 0 0 auto; accent-color: var(--accent); width: 16px; height: 16px; }
 
   .action-bar {
     display: flex;
@@ -288,7 +314,8 @@
     gap: 14px; align-items: start; padding: 12px;
     border: 1px solid var(--border); border-radius: 7px; background: var(--bg);
   }
-  .component-row .checkbox-label { padding-top: 9px; }
+  .component-row .checkbox-label { padding-top: 9px; min-height: 0; background: transparent; border: 0; }
+  .component-row .checkbox-label:hover { transform: none; background: transparent; }
   .address-field { width: 100%; min-height: 48px; resize: vertical; padding: 9px 11px;
     background: var(--card); border: 1px solid var(--border); border-radius: 6px;
     color: var(--fg); font: 0.8rem 'SFMono-Regular', Consolas, monospace; }
@@ -297,10 +324,13 @@
   .address-help { margin-top: 5px; font-size: .68rem; color: var(--muted); }
   .empty-selection { color: var(--muted); font-size: .8rem; padding: 4px 0; }
 
+  @media (max-width: 980px) {
+    #componentCheckboxes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
   @media (max-width: 640px) {
     body { padding: 12px; }
     .config-panel { grid-template-columns: 1fr; }
-    .checkbox-grid { grid-template-columns: 1fr; }
+    #componentCheckboxes { grid-template-columns: 1fr; }
     .component-row { grid-template-columns: 1fr; }
     th, td { padding: 8px 10px; font-size: 0.75rem; }
   }
